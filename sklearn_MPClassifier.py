@@ -42,7 +42,6 @@ def nlf_encode(seq):
     e = x.to_numpy().flatten()
     return e
 
-blosum62 = ep.blosum62
 
 def blosum_encode(seq):
     '''
@@ -53,6 +52,7 @@ def blosum_encode(seq):
     '''
     #encode a peptide into blosum features
     s=list(seq)
+    blosum62 = ep.blosum62
     x = pd.DataFrame([blosum62[i] for i in seq]).reset_index(drop=True)
     e = x.to_numpy().flatten() 
     # print(x)   
@@ -76,7 +76,7 @@ def test_predictor(allele, encoder, ax):
     reg = MLPRegressor(hidden_layer_sizes=(20), alpha=0.01, max_iter=500,
                         activation='relu', solver='lbfgs', random_state=2)
     df = ep.get_training_set(allele, length=9)
-    #print (len(df))
+    print (len(df))
     X = df.peptide.apply(lambda x: pd.Series(encoder(x)),1)
     y = df.log50k
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1)
