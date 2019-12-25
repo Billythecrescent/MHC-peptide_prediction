@@ -35,22 +35,31 @@ def one_hot_encode(seq):
 nlf = pd.read_csv('https://raw.githubusercontent.com/dmnfarrell/epitopepredict/master/epitopepredict/mhcdata/NLF.csv',index_col=0)
 def nlf_encode(seq):    
     x = pd.DataFrame([nlf[i] for i in seq]).reset_index(drop=True)  
-    e = x.values.flatten()
+    e = x.to_numpy().flatten()
     return e
 
 blosum62 = ep.blosum62
 
 def blosum_encode(seq):
+    '''
+    Encode protein sequence, seq, to one-dimension array.
+    Use blosum62 matrix to encode the number.
+    input: [string] seq (length = n)
+    output: [1x24n ndarray] e
+    '''
     #encode a peptide into blosum features
     s=list(seq)
     x = pd.DataFrame([blosum62[i] for i in seq]).reset_index(drop=True)
-    e = x.values.flatten() 
-    print(e)   
+    e = x.to_numpy().flatten() 
+    print(x)   
     return e
 
 def random_encode(p):
     return [np.random.randint(20) for i in pep]
 
-pep='ALDFEQEMT'
-#e=blosum_encode(pep)
-e = one_hot_encode(pep)
+def main():
+    pep='ALDFEQEMT'
+    e=blosum_encode(pep)
+    # e = one_hot_encode(pep)
+
+main()
