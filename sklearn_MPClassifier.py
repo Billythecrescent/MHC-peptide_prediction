@@ -62,13 +62,19 @@ def random_encode(pep):
     return [np.random.randint(20) for i in pep]
 
 def auc_score(true,sc,cutoff=None):
-
+    '''
+    Calculate the auc score of soc curve
+    '''
     if cutoff!=None:
         true = (true<=cutoff).astype(int)
-        sc = (sc<=cutoff).astype(int)        
-    fpr, tpr, thresholds = metrics.roc_curve(true, sc, pos_label=1)
-    r = metrics.auc(fpr, tpr)
-    #print (r)
+        sc = (sc<=cutoff).astype(int)
+    # print(true, sc)
+    
+    r = metrics.roc_auc_score(true, sc) 
+    # #Or use the following code for alternative
+    # fpr, tpr, thresholds = metrics.roc_curve(true, sc, pos_label=1)
+    # r = metrics.auc(fpr, tpr)
+    
     return  r
 
 def test_predictor(allele, encoder, ax):
@@ -78,13 +84,16 @@ def test_predictor(allele, encoder, ax):
     #get dataset (9-mer)
     df = ep.get_training_set(allele, length=9)
     # print (len(df))
+
     #extract x, y data (using different encoder to encode the peptide)
     X = df.peptide.apply(lambda x: pd.Series(encoder(x)),1)
     y = df.log50k
     #split training data and test data
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1)
+
     #regression training
     reg.fit(X_train, y_train)
+
     #get the score on test data
     sc = reg.predict(X_test)
     # print(reg.score(X_test, y_test))
@@ -95,8 +104,10 @@ def test_predictor(allele, encoder, ax):
     ax.plot((0,1), (0,1), ls="--", lw=2, c=".2")
     ax.set_xlim((0,1));  ax.set_ylim((0,1))
     ax.set_title(encoder.__name__)    
-    auc = ep.auc_score(y_test,sc,cutoff=.426)
-    print(auc)
+
+    #Generate auc value
+    auc = auc_score(y_test,sc,cutoff=.426) # auc = ep.auc_score(y_test,sc,cutoff=.426)
+    
     ax.text(.1,.9,'auc=%s' %round(auc,2))
     sns.despine()
 
@@ -115,6 +126,6 @@ def main():
     for enc in encs:
         test_predictor(allele,enc,ax=axs[i])
         i+=1
-
+    plt.savefig('demo.png', bbox_inches='tight')
 
 main()
