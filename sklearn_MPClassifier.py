@@ -11,6 +11,7 @@ sns.set_context("notebook", font_scale=1.4)
 import epitopepredict as ep
 
 from sklearn import metrics
+import joblib
 from sklearn.model_selection import train_test_split,cross_val_score,ShuffleSplit
 from sklearn.neural_network import MLPRegressor
 
@@ -111,21 +112,54 @@ def test_predictor(allele, encoder, ax):
     ax.text(.1,.9,'auc=%s' %round(auc,2))
     sns.despine()
 
+def build_predictor(allele, encoder):
+
+    data = ep.get_training_set(allele)
+    if len(data)<200:
+        return
+
+    # #write training dataframe to csv file
+    # data.to_csv('data.csv')
+    
+    reg = MLPRegressor(hidden_layer_sizes=(20), alpha=0.01, max_iter=500,
+                        activation='relu', solver='lbfgs', random_state=2)    
+    X = data.peptide.apply(lambda x: pd.Series(encoder(x)),1)
+    y = data.log50k
+    print (allele, len(X))
+    reg.fit(X,y)       
+    return reg
+
+def get_allele_names():
+    d = ep.get_training_set(length=9)
+    a = d.allele.value_counts()
+    a =a[a>200]
+    return list(a.index)
+
+
 
 def main():
-    pep='ALDFEQEMT'
+    # pep='ALDFEQEMT'
     # e=blosum_encode(pep)
     # e = one_hot_encode(pep)
 
-    sns.set_context('notebook')
-    encs=[blosum_encode,nlf_encode,one_hot_encode,random_encode]
-    allele='HLA-A*03:01'
-    fig,axs=plt.subplots(2,2,figsize=(10,10))
-    axs=axs.flat
-    i=0
-    for enc in encs:
-        test_predictor(allele,enc,ax=axs[i])
-        i+=1
-    plt.savefig('demo.png', bbox_inches='tight')
+    # # Draw regression figure
+    # sns.set_context('notebook')
+    # encs=[blosum_encode,nlf_encode,one_hot_encode,random_encode]
+    # allele='HLA-A*03:01'
+    # fig,axs=plt.subplots(2,2,figsize=(10,10))
+    # axs=axs.flat
+    # i=0
+    # for enc in encs:
+    #     test_predictor(allele,enc,ax=axs[i])
+    #     i+=1
+    # plt.savefig('demo.png', bbox_inches='tight')
+
+    al = get_allele_names()
+    path = 'models'
+    for a in al:
+        fname = os.path.join(path, a+'.joblib')
+        reg = build_predictor(a, blosum_encode)
+        if reg is not None:
+            joblib.dump(reg, fname, protocol=2)
 
 main()
