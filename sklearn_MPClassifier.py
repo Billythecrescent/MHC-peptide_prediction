@@ -138,6 +138,7 @@ def get_allele_names():
 def main():
     # pep='ALDFEQEMT'
     # e=blosum_encode(pep)
+    # print(e)
     # e = one_hot_encode(pep)
 
     # Draw regression figure

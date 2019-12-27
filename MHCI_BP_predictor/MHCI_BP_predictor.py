@@ -1,6 +1,6 @@
 #MHCI_BP_predictor.py
 
-import os, sys, math
+import os, sys, math, re
 import numpy as np
 import pandas as pd
 #matplotlib inline
@@ -51,18 +51,25 @@ def auc_score(true,sc,cutoff=None):
 
 def build_predictor(allele, encoder):
 
-    data = ep.get_training_set(allele)
+    data = ep.get_training_set(allele, length=9)
     if len(data)<200:
         return
 
     # #write training dataframe to csv file
-    # data.to_csv('data.csv')
+    # aw = re.sub('[*:]','_',allele) 
+    # data.to_csv(os.path.join('alletes',aw+'_data.csv'))
     
     reg = MLPRegressor(hidden_layer_sizes=(20), alpha=0.01, max_iter=500,
                         activation='relu', solver='lbfgs', random_state=2)    
-    X = data.peptide.apply(lambda x: pd.Series(encoder(x)),1)
+    X = data.peptide.apply(lambda x: pd.Series(encoder(x)),1) #Find bug: encoding result has NaN
     y = data.log50k
-    print (allele, len(X))
+
+    ## ---- TEST ---- ##
+    # print(X)
+    # print(allele, np.any(np.isnan(X)), np.all(np.isfinite(X)))
+    # print(allele, np.any(np.isnan(y)), np.all(np.isfinite(y)))
+    # print (allele, len(X))
+    
     reg.fit(X,y)       
     return reg
 
@@ -76,7 +83,8 @@ def main():
     al = get_allele_names()
     path = 'models'
     for a in al:
-        fname = os.path.join(path, a+'.joblib')
+        aw = re.sub('[*:]','_',a) 
+        fname = os.path.join(path, aw+'.joblib')
         reg = build_predictor(a, blosum_encode)
         if reg is not None:
             joblib.dump(reg, fname, protocol=2)
