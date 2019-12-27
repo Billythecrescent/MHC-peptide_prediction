@@ -135,31 +135,21 @@ def get_allele_names():
     a =a[a>200]
     return list(a.index)
 
-
-
 def main():
     # pep='ALDFEQEMT'
     # e=blosum_encode(pep)
     # e = one_hot_encode(pep)
 
-    # # Draw regression figure
-    # sns.set_context('notebook')
-    # encs=[blosum_encode,nlf_encode,one_hot_encode,random_encode]
-    # allele='HLA-A*03:01'
-    # fig,axs=plt.subplots(2,2,figsize=(10,10))
-    # axs=axs.flat
-    # i=0
-    # for enc in encs:
-    #     test_predictor(allele,enc,ax=axs[i])
-    #     i+=1
-    # plt.savefig('demo.png', bbox_inches='tight')
-
-    al = get_allele_names()
-    path = 'models'
-    for a in al:
-        fname = os.path.join(path, a+'.joblib')
-        reg = build_predictor(a, blosum_encode)
-        if reg is not None:
-            joblib.dump(reg, fname, protocol=2)
+    # Draw regression figure
+    sns.set_context('notebook')
+    encs=[blosum_encode,nlf_encode,one_hot_encode,random_encode]
+    allele='HLA-A*03:01'
+    fig,axs=plt.subplots(2,2,figsize=(10,10))
+    axs=axs.flat
+    i=0
+    for enc in encs:
+        test_predictor(allele,enc,ax=axs[i])
+        i+=1
+    plt.savefig('demo.png', bbox_inches='tight')
 
 main()
