@@ -38,7 +38,8 @@ def evaluate_predictor(P, allele):
 
     data = ep.get_evaluation_set(allele, length=9)
     #print (len(data))
-    P.predict_peptides(list(data.peptide), alleles=allele, cpus=4)
+    print(list(data.peptide), allele)
+    P.predict_peptides(list(data.peptide), alleles=allele, cpus=4) #bug line
     x = P.get_scores(allele)
     x = data.merge(x,on='peptide')
     auc = auc_score(x.ic50,x.score,cutoff=500)
@@ -52,22 +53,25 @@ def main():
     comp=[]
     evalset = ep.get_evaluation_set(length=9) #type: DataFrame
 
-    #write training dataframe to csv file
-    evalset.to_csv(os.path.join('evaluate_data.csv'))
+    # #write training dataframe to csv file
+    # evalset.to_csv(os.path.join('evaluate_data.csv'))
     
     test_alleles = evalset.allele.unique() #numpy.ndarray 'str'
+
+    auc, df = evaluate_predictor(preds[0], test_alleles[0])
+    # print(auc, df)
     
-    # for P in preds:    
+    # for P in preds[:1]:    
     #     m=[]
     #     for a in test_alleles[:1]:    
     #         auc,df = evaluate_predictor(P, a)  
     #         m.append((a,auc,len(df)))    
-    #         try:
-    #             auc,df = evaluate_predictor(P, a)
-    #             m.append((a,auc,len(df)))            
-    #         except Exception as e:
-    #             print (a,e)
-    #             pass
+    #         # try:
+    #         #     auc,df = evaluate_predictor(P, a)
+    #         #     m.append((a,auc,len(df)))            
+    #         # except Exception as e:
+    #         #     print (a,e)
+    #         #     pass
     #     m=pd.DataFrame(m,columns=['allele','score','size'])
     #     m['name'] = P.name
     #     comp.append(m)
