@@ -15,8 +15,26 @@ import joblib
 from sklearn.model_selection import train_test_split,cross_val_score,ShuffleSplit
 from sklearn.neural_network import MLPRegressor
 
+module_path = os.path.dirname(os.path.abspath(__file__)) #path to module
+model_path = os.path.join(os.path.abspath(os.path.dirname(module_path)),"models")
+
 codes = ['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L',
          'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'Y']
+
+def blosum_encode(seq):
+    '''
+    Encode protein sequence, seq, to one-dimension array.
+    Use blosum62 matrix to encode the number.
+    input: [string] seq (length = n)
+    output: [1x24n ndarray] e
+    '''
+    #encode a peptide into blosum features
+    s=list(seq)
+    blosum62 = ep.blosum62
+    x = pd.DataFrame([blosum62[i] for i in seq]).reset_index(drop=True)
+    e = x.to_numpy().flatten() 
+    # print(x)   
+    return e
 
 def auc_score(true,sc,cutoff=None):
     '''
@@ -34,22 +52,18 @@ def auc_score(true,sc,cutoff=None):
     
     return  r
 
-def evaluate_predictor(P, allele):
+def evaluate_predictor(X, allele):
 
-    data = ep.get_evaluation_set(allele, length=9)
     #print (len(data))
-    print(list(data.peptide), allele)
-    P.predict_peptides(list(data.peptide), alleles=allele, cpus=4) #bug line
-    x = P.get_scores(allele)
-    x = data.merge(x,on='peptide')
-    auc = auc_score(x.ic50,x.score,cutoff=500)
-    return auc, data
+    # print(list(data.peptide), allele)
+    reg = joblib.load(os.path.join(model_path,allele+'.joblib'))
+    result = reg.predict(X)
+    # auc = auc_score(x.ic50,x.score,cutoff=500)
+    return result
 
 def main():
-        
-    preds = [ep.get_predictor('basicmhc1'),
-            ep.get_predictor('netmhcpan',scoring='affinity'),
-            ep.get_predictor('mhcflurry')]
+    
+    allele = "HLA-A*01:01"
     comp=[]
     evalset = ep.get_evaluation_set(length=9) #type: DataFrame
 
@@ -58,35 +72,10 @@ def main():
     
     test_alleles = evalset.allele.unique() #numpy.ndarray 'str'
 
-    auc, df = evaluate_predictor(preds[0], test_alleles[0])
-    # print(auc, df)
+    data = ep.get_evaluation_set(allele, length=9)
+    X = data.peptide.apply(lambda x: pd.Series(blosum_encode(x)),1)
+    result = evaluate_predictor(X, "HLA-A_01_01")
+    print(result)
     
-    # for P in preds[:1]:    
-    #     m=[]
-    #     for a in test_alleles[:1]:    
-    #         auc,df = evaluate_predictor(P, a)  
-    #         m.append((a,auc,len(df)))    
-    #         # try:
-    #         #     auc,df = evaluate_predictor(P, a)
-    #         #     m.append((a,auc,len(df)))            
-    #         # except Exception as e:
-    #         #     print (a,e)
-    #         #     pass
-    #     m=pd.DataFrame(m,columns=['allele','score','size'])
-    #     m['name'] = P.name
-    #     comp.append(m)
-    # print(comp)
-    # #display evaluation
-    # c=pd.concat(comp)
-    # x=pd.pivot_table(c,index=['allele','size'],columns='name',values='score')#.reset_index()
-
-    # ax=sns.boxplot(data=c,y='score',x='name')#,hue='allele')
-    # g=sns.catplot(data=c,y='score',x='allele',hue='name',
-    #             kind='bar',aspect=3,height=5,legend=False)
-    # plt.legend(bbox_to_anchor=(1.1, 1.05))
-    # plt.setp(g.ax.get_xticklabels(), rotation=90)
-    # plt.tight_layout()
-    # plt.savefig('benchmarks.png')
-    # x.to_csv('benchmarks.csv')
 
 main()
