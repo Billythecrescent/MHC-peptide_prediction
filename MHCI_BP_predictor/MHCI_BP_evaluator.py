@@ -52,14 +52,17 @@ def auc_score(true,sc,cutoff=None):
     
     return  r
 
-def evaluate_predictor(X, allele):
+def evaluate_predictor(X, y, allele):
 
     #print (len(data))
     # print(list(data.peptide), allele)
     reg = joblib.load(os.path.join(model_path,allele+'.joblib'))
-    result = reg.predict(X)
+    scores = reg.predict(X)
+
+    #Generate auc value
+    auc = auc_score(y,scores,cutoff=.426) # auc = ep.auc_score(y_test,sc,cutoff=.426)
     # auc = auc_score(x.ic50,x.score,cutoff=500)
-    return result
+    return auc
 
 def main():
     
@@ -74,7 +77,8 @@ def main():
 
     data = ep.get_evaluation_set(allele, length=9)
     X = data.peptide.apply(lambda x: pd.Series(blosum_encode(x)),1)
-    result = evaluate_predictor(X, "HLA-A_01_01")
+    y = data.log50k
+    result = evaluate_predictor(X, y, "HLA-A_01_01")
     print(result)
     
 
