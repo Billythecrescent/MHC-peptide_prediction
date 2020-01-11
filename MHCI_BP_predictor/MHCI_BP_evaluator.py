@@ -52,11 +52,22 @@ def auc_score(true,sc,cutoff=None):
     
     return  r
 
+def find_model(allele):
+    fname = os.path.join(model_path, allele+'.joblib')
+    if os.path.exists(fname):
+        reg = joblib.load(fname)
+        return reg
+    else:
+        return
+
 def evaluate_predictor(X, y, allele):
 
     #print (len(data))
     # print(list(data.peptide), allele)
-    reg = joblib.load(os.path.join(model_path,allele+'.joblib'))
+    reg = find_model(allele)
+    if reg is None:
+        print ('Locals do not have model for this allele.')
+        return
     scores = reg.predict(X)
 
     #Generate auc value
@@ -66,7 +77,7 @@ def evaluate_predictor(X, y, allele):
 
 def main():
     
-    allele = "HLA-A*01:01"
+    alleles = ["HLA-A*01:01", "HLA-A*02:01", "HLA-A*02:02", "HLA-A*02:03", "HLA-A*02:06"]
     comp=[]
     evalset = ep.get_evaluation_set(length=9) #type: DataFrame
 
@@ -74,12 +85,19 @@ def main():
     # evalset.to_csv(os.path.join('evaluate_data.csv'))
     
     test_alleles = evalset.allele.unique() #numpy.ndarray 'str'
+    # print(test_alleles)
+    for allele in test_alleles:
+        data = ep.get_evaluation_set(allele, length=9)
+        X = data.peptide.apply(lambda x: pd.Series(blosum_encode(x)),1)
+        y = data.log50k
+        aw = re.sub('[*:]','_',allele) 
+        result = evaluate_predictor(X, y, aw)
+        # print(result)
+        comp.append(result)
+    fo = open("written_result.csv",'w')
+    print(test_alleles, file=fo)
+    print(comp, file=fo)
 
-    data = ep.get_evaluation_set(allele, length=9)
-    X = data.peptide.apply(lambda x: pd.Series(blosum_encode(x)),1)
-    y = data.log50k
-    result = evaluate_predictor(X, y, "HLA-A_01_01")
-    print(result)
-    
+
 
 main()
