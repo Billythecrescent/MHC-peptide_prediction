@@ -94,9 +94,7 @@ def main():
         result = evaluate_predictor(X, y, aw)
         # print(result)
         comp.append(result)
-    fo = open("written_result.csv",'w')
-    print(test_alleles, file=fo)
-    print(comp, file=fo)
+    print(comp)
 
 
 
