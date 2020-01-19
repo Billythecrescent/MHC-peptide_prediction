@@ -49,9 +49,9 @@ def auc_score(true,sc,cutoff=None):
     
     return  r
 
-def build_predictor(allele, encoder):
+def build_predictor(training_data, allele, encoder, hidden_node):
 
-    data = ep.get_training_set(allele, length=9)
+    data = training_data[training_data['allele'] == allele]
     if len(data)<200:
         return
 
@@ -59,34 +59,36 @@ def build_predictor(allele, encoder):
     # aw = re.sub('[*:]','_',allele) 
     # data.to_csv(os.path.join('alletes',aw+'_data.csv'))
     
-    reg = MLPRegressor(hidden_layer_sizes=(20), alpha=0.01, max_iter=500,
+    reg = MLPRegressor(hidden_layer_sizes=(hidden_node), alpha=0.01, max_iter=500,
                         activation='relu', solver='lbfgs', random_state=2)    
     X = data.peptide.apply(lambda x: pd.Series(encoder(x)),1) #Find bug: encoding result has NaN
     y = data.log50k
 
     ## ---- TEST ---- ##
     # print(X)
-    # print(allele, np.any(np.isnan(X)), np.all(np.isfinite(X)))
-    # print(allele, np.any(np.isnan(y)), np.all(np.isfinite(y)))
     # print (allele, len(X))
     
     reg.fit(X,y)       
     return reg
 
-def get_allele_names():
-    d = ep.get_training_set(length=9)
-    a = d.allele.value_counts()
+def get_allele_names(data):
+    a = data.allele.value_counts()
     a =a[a>200]
     return list(a.index)
 
-def main():
-    al = get_allele_names()
+def build_prediction_model(training_data, hidden_node):
+    al = get_allele_names(training_data)
     path = 'models'
     for a in al:
         aw = re.sub('[*:]','_',a) 
         fname = os.path.join(path, aw+'.joblib')
-        reg = build_predictor(a, blosum_encode)
+        reg = build_predictor(training_data, a, blosum_encode, hidden_node)
         if reg is not None:
             joblib.dump(reg, fname, protocol=2)
 
-main()
+def main(hidden_node):
+    training_data = ep.get_training_set(length=9)
+    # print(training_data)
+    build_prediction_model(training_data, hidden_node)
+
+# main(20)

@@ -75,9 +75,9 @@ def evaluate_predictor(X, y, allele):
     # auc = auc_score(x.ic50,x.score,cutoff=500)
     return auc
 
-def main():
+def get_evaluation_by_allele():
     
-    alleles = ["HLA-A*01:01", "HLA-A*02:01", "HLA-A*02:02", "HLA-A*02:03", "HLA-A*02:06"]
+    # alleles = ["HLA-A*01:01", "HLA-A*02:01", "HLA-A*02:02", "HLA-A*02:03", "HLA-A*02:06"]
     comp=[]
     evalset = ep.get_evaluation_set(length=9) #type: DataFrame
 
@@ -94,8 +94,11 @@ def main():
         result = evaluate_predictor(X, y, aw)
         # print(result)
         comp.append(result)
-    print(comp)
 
+    # print(comp)
+    # print(test_alleles.tolist())
+    #Write Result
+    comp_df = pd.DataFrame(comp, index = test_alleles.tolist())
+    # print(comp_df)
 
-
-main()
+# main()
