@@ -18,3 +18,5 @@ alleles = ["HLA-A_01_01", "HLA-A_02_01"]
 seqs = peptutils.create_random_sequences(5000)
 reg = joblib.load(os.path.join(model_path,alleles[0]+'.joblib'))
 print(reg.predict(seqs[0]))
+
+
