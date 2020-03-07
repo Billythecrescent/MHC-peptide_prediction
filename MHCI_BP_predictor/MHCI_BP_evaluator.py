@@ -36,6 +36,10 @@ def blosum_encode(seq):
     # print(x)   
     return e
 
+def geo_mean(iterable):
+    nplist = np.array(iterable)
+    return nplist.prod()**(1.0/len(nplist))
+
 def auc_score(true,sc,cutoff=None):
     '''
     Calculate the auc score of soc curve
@@ -74,6 +78,45 @@ def evaluate_predictor(X, y, allele):
     auc = auc_score(y,scores,cutoff=.426) # auc = ep.auc_score(y_test,sc,cutoff=.426)
     # auc = auc_score(x.ic50,x.score,cutoff=500)
     return auc
+
+def predict_8mer(allele, seq):
+
+    #turn 8mer to 9mer
+    seq_list = []
+    for i in range(5):
+        seq_list.append(seq[:(i+3)]+'X'+seq[(i+3):])
+    seq_df = pd.DataFrame(seq_list, columns=['peptide'])
+
+    #encode
+    X = seq_df.peptide.apply(lambda x: pd.Series(blosum_encode(x)),1)
+
+    #find model
+    aw = re.sub('[*:]','_',allele) 
+    reg = find_model(aw)
+    if reg is None:
+        print ('Locals do not have model for this allele.')
+        return
+    
+    #predict
+    scores = reg.predict(X)
+
+    #geometric mean
+    mean_score = geo_mean(scores)
+    return mean_score
+
+print(predict_8mer("HLA-A*01:01", 'LTDFGLSK'))
+
+def LengthFree_predictor():
+    allele = "HLA-A*01:01"
+    test_data_8 = ep.get_training_set(allele, length=8)
+    # print(test_data_8)
+    # print(len(test_data_8)) #23
+    
+    data_scores = test_data_8.peptide.apply(predict_8mer)
+
+
+LengthFree_predictor()
+    
 
 def get_evaluation_by_allele():
     
