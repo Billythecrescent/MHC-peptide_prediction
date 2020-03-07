@@ -109,19 +109,57 @@ def predict_8mer(allele, seq):
 
 # print(predict_8mer("HLA-A*01:01", 'LTDFGLSK'))
 
+def predict_non9mer(allele, seq):
+
+    seq_list = []
+    if len(seq) == 8:
+        #turn 8mer to 9mer
+        for i in range(5):
+            seq_list.append(seq[:(i+3)]+'X'+seq[(i+3):])
+        seq_df = pd.DataFrame(seq_list, columns=['peptide'])
+
+    if len(seq) == 10:
+        #turen 10mer to 0mer
+        for i in range(6):
+            seq_list.append(seq[:(i+3)]+seq[(i+4):])
+        seq_df = pd.DataFrame(seq_list, columns=['peptide'])
+    # print(seq_df)
+
+    #encode
+    X = seq_df.peptide.apply(lambda x: pd.Series(blosum_encode(x)),1)
+
+    #find model
+    aw = re.sub('[*:]','_',allele) 
+    reg = find_model(aw)
+    if reg is None:
+        print ('Locals do not have model for this allele.')
+        return
+    
+    #predict
+    scores = reg.predict(X)
+
+    #geometric mean
+    mean_score = geo_mean(scores)
+    return mean_score
+
+print(predict_non9mer("HLA-A*01:01", "YYRYPTGESY"))
+
 def LengthFree_predictor():
     allele = "HLA-A*01:01"
     test_data_8 = ep.get_training_set(allele, length=8)
+    test_data_10 = ep.get_training_set(allele, length=10)
     # print(test_data_8)
+    # print(test_data_10)
     # print(len(test_data_8)) #23
     y = test_data_8.log50k
     
     data_scores = test_data_8.peptide.apply(lambda x: predict_8mer(allele, x))
+    data_scores.columns = ['score']
     # print(data_scores)
 
     #Generate auc value
     auc = auc_score(y,data_scores,cutoff=.426)
-    print(auc)
+    # print(auc)
 
     return auc
 
