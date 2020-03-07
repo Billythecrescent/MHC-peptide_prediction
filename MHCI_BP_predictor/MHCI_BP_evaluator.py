@@ -40,13 +40,16 @@ def geo_mean(iterable):
     nplist = np.array(iterable)
     return nplist.prod()**(1.0/len(nplist))
 
-def auc_score(true,sc,cutoff=None):
+def auc_score(true,sc,cutoff = None):
     '''
     Calculate the auc score of soc curve
     '''
     if cutoff!=None:
         true = (true<=cutoff).astype(int)
         sc = (sc<=cutoff).astype(int)
+    else:
+        print("Please specify the classcification threshould!")
+        return 
     # print(true, sc)
     
     r = metrics.roc_auc_score(true, sc) 
@@ -104,16 +107,23 @@ def predict_8mer(allele, seq):
     mean_score = geo_mean(scores)
     return mean_score
 
-print(predict_8mer("HLA-A*01:01", 'LTDFGLSK'))
+# print(predict_8mer("HLA-A*01:01", 'LTDFGLSK'))
 
 def LengthFree_predictor():
     allele = "HLA-A*01:01"
     test_data_8 = ep.get_training_set(allele, length=8)
     # print(test_data_8)
     # print(len(test_data_8)) #23
+    y = test_data_8.log50k
     
-    data_scores = test_data_8.peptide.apply(predict_8mer)
+    data_scores = test_data_8.peptide.apply(lambda x: predict_8mer(allele, x))
+    # print(data_scores)
 
+    #Generate auc value
+    auc = auc_score(y,data_scores,cutoff=.426)
+    print(auc)
+
+    return auc
 
 LengthFree_predictor()
     
