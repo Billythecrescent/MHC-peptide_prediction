@@ -39,7 +39,9 @@ def datasetDistribute(dataset, format = None):
     return allele_counts_2d
 
 
+train_set = ep.get_training_set(length=9)
 evalset = ep.get_evaluation_set()
+print(evalset)
 # print(datasetAllele(evalset, True, '[*]', ''))
-print(datasetDistribute(evalset, 'csv'))
+# print(datasetDistribute(train_set, 'csv'))
 

@@ -140,7 +140,7 @@ def predict_non9mer(allele, seq):
             seq_list.append(seq[:(i)]+seq[(i+1):(i+6)]+seq[(i+7):])
     
     seq_df = pd.DataFrame(seq_list, columns=['peptide'])
-    print(seq_df)
+    # print(seq_df)
 
     #encode
     X = seq_df.peptide.apply(lambda x: pd.Series(blosum_encode(x)),1)
@@ -154,14 +154,14 @@ def predict_non9mer(allele, seq):
     
     #predict
     scores = reg.predict(X)
-    print(scores)
+    # print(scores)
 
     #geometric mean
     mean_score = geo_mean(scores)
     return mean_score
 
 # print(predict_non9mer("HLA-A*01:01", "YYRYPTGESY"))
-print(predict_non9mer("HLA-A*01:01", "YSLEYFQFVKK"))
+# print(predict_non9mer("HLA-A*01:01", "YSLEYFQFVKK"))
 
 def LengthFree_predictor(allele, data):
 
@@ -169,7 +169,7 @@ def LengthFree_predictor(allele, data):
     
     data_scores = data.peptide.apply(lambda x: predict_non9mer(allele, x))
     data_scores.columns = ['score']
-    print(data_scores)
+    # print(data_scores)
 
     #Generate auc value
     auc = auc_score(y,data_scores,cutoff=.426)
@@ -181,7 +181,7 @@ allele = "HLA-A*01:01"
 test_data_8 = ep.get_training_set(allele, length=8)
 test_data_10 = ep.get_training_set(allele, length=10)
 test_data_11 = ep.get_training_set(allele, length=11)
-# LengthFree_predictor(allele, test_data_10)
+LengthFree_predictor(allele, test_data_11)
     
 
 def get_evaluation_by_allele():
