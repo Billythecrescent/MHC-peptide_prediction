@@ -13,6 +13,38 @@ def data_8mer_normalization(filename):
     alleles = df.allele.to_list()
     new_alleles = []
     for allele in alleles:
+        if re.search(r'([A-Z])([0-9]{2})([0-9]{2})', allele) != None:
+            str_groups = re.search(r'([A-Z])([0-9]{2})([0-9]{2})', allele).groups()
+            new_allele = "HLA-" + str_groups[0] + "*" + str_groups[1] + ':' + str_groups[2]
+            new_alleles.append(new_allele)
+        elif re.search(r'(.*-[0-9])_([a-zA-Z]{2})', allele) != None:
+            str_groups = re.search(r'(.*-[0-9])_([a-zA-Z]{2})', allele).groups()
+            new_allele = str_groups[0] + "-" + str_groups[1]
+            new_alleles.append(new_allele)
+        elif re.search(r'([A-Za-z]{4})_([a-zA-Z])([0-9]{2})', allele) != None:
+            str_groups = re.search(r'([A-Za-z]{4})_([a-zA-Z])([0-9]{2})', allele).groups()
+            new_allele = str_groups[0] + "-" + str_groups[1] + "*" + str_groups[2]
+            new_alleles.append(new_allele)
+        else:
+            new_allele = allele
+            new_alleles.append(new_allele)
+
+    new_alleles_df = pd.DataFrame(new_alleles,columns=['allele'])
+    new_df = pd.concat([new_alleles_df, pd.DataFrame(df, columns=['peptide', 'ic50', 'log50k'])], axis=1)
+    return new_df 
+
+# ##normalize_8mer
+# file = os.path.join(data_path, "evalset_8mers.csv")
+# # print(file)
+# # print(data_8mer_normalization(file))
+# df = data_8mer_normalization(file)
+# df.to_csv(os.path.join(data_path, 'evalset_8mer_normalization.csv'))
+
+def data_9mer_normalization(filename):
+    df = pd.read_csv(filename)
+    alleles = df.allele.to_list()
+    new_alleles = []
+    for allele in alleles:
         str_groups = re.search(r'(.*\*)([0-9]{2})([0-9]{2})', allele).groups()
         new_allele = str_groups[0] + str_groups[1] + ':' + str_groups[2]
         # print(new_allele)
@@ -20,17 +52,14 @@ def data_8mer_normalization(filename):
     new_alleles_df = pd.DataFrame(new_alleles,columns=['allele'])
     # new_df = new_alleles_df+df['peptide']+df['ic50']+df['log50k']
     new_df = pd.concat([new_alleles_df, pd.DataFrame(df, columns=['peptide', 'ic50', 'log50k'])], axis=1)
-    return new_df
+    return new_df 
 
 # ##normalize_9mer
 # file = os.path.join(data_path, "evalset_9mers.csv")
 # # print(file)
-# # print(data_8mer_normalization(file))
-# df = data_8mer_normalization(file)
+# # print(data_9mer_normalization(file))
+# df = data_9mer_normalization(file)
 # df.to_csv(os.path.join(data_path, 'evalset_9mer_normalization.csv'))
-
-def data_9mer_normalization(filename):
-    return 
 
 def data_10mer_normalization(filename):
     return 
