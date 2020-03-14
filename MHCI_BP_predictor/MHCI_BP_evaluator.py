@@ -191,14 +191,14 @@ def LengthFree_predictor(allele, data):
 # LengthFree_predictor(allele, test_data_11)
 
 ## Secondary Test ##
-dataset_filename = os.path.join(data_path, "evalset_8mer_normalization.csv")
-df = pd.read_csv(dataset_filename)
-alleles = df.allele.unique()
-# print(alleles)
-allele = alleles[10]
-print(allele)
-data = df.loc[df['allele'] == allele]
-result = LengthFree_predictor(allele, data)
+# dataset_filename = os.path.join(data_path, "evalset_8mer_normalization.csv")
+# df = pd.read_csv(dataset_filename)
+# alleles = df.allele.unique()
+# # print(alleles)
+# allele = alleles[12]
+# print(allele)
+# data = df.loc[df['allele'] == allele]
+# result = LengthFree_predictor(allele, data)
 
 
 ## beita Test ##
@@ -220,8 +220,8 @@ def Process_LengthFree_Prediction(dataset_filename):
     print(auc_df)
     
 
-# dataset_filename = os.path.join(data_path, "evalset_8mer_normalization.csv")
-# Process_LengthFree_Prediction(dataset_filename)
+dataset_filename = os.path.join(data_path, "evalset_11mer_normalization.csv")
+Process_LengthFree_Prediction(dataset_filename)
 
 def get_evaluation_by_allele():
     

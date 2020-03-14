@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import epitopepredict as ep
 
+module_path = os.path.abspath(os.path.dirname(__file__)) #path to module
 
 def datasetAllele(dataset, rename = False, be_substituted = '', substitute = ''):
     '''
@@ -36,9 +37,9 @@ def datasetDistribute(dataset, format = None, output_filename = None):
     allele_counts_2d = pd.DataFrame(allele_counts, columns = ['counts'], index = allele_unique)
     if format == 'csv':
         if output_filename == None:
-            allele_counts_2d.to_csv(os.path.join(os.getcwd(), 'dataset_alletes_distribution.csv'))
+            allele_counts_2d.to_csv(os.path.join(module_path, 'dataset_alletes_distribution.csv'))
         elif output_filename != None:
-            allele_counts_2d.to_csv(os.path.join(os.getcwd(), output_filename + ".csv"))
+            allele_counts_2d.to_csv(os.path.join(module_path, output_filename + ".csv"))
     return allele_counts_2d
 
 
@@ -46,4 +47,4 @@ train_set = ep.get_training_set(length=8)
 evalset = ep.get_evaluation_set()
 # print(evalset)
 # print(datasetAllele(train_set, True))
-# print(datasetDistribute(train_set, 'csv'))
+print(datasetDistribute(evalset, 'csv', "epitopepredict_9mer_evalset"))
