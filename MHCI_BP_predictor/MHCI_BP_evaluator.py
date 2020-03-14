@@ -15,8 +15,11 @@ import joblib
 from sklearn.model_selection import train_test_split,cross_val_score,ShuffleSplit
 from sklearn.neural_network import MLPRegressor
 
-module_path = os.path.dirname(os.path.abspath(__file__)) #path to module
-model_path = os.path.join(os.path.abspath(os.path.dirname(module_path)),"models")
+module_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__))) #code\MHC-peptide_prediction
+current_path = os.path.dirname(os.path.abspath(__file__)) #code\MHC-peptide_prediction\MHCI_BP_predictor
+model_path = os.path.join(module_path,"models") #code\MHC-peptide_prediction\models
+data_path = os.path.join(module_path,"data") #code\MHC-peptide_prediction\data
+
 
 codes = ['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L',
          'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'Y']
@@ -52,6 +55,9 @@ def auc_score(true,sc,cutoff = None):
         return 
     # print(true, sc)
     
+    if len(np.unique(true)) == 1: # bug in roc_auc_score
+        r =  metrics.accuracy_score(true, np.rint(sc))
+        return r
     r = metrics.roc_auc_score(true, sc) 
     # #Or use the following code for alternative
     # fpr, tpr, thresholds = metrics.roc_curve(true, sc, pos_label=1)
@@ -98,7 +104,7 @@ def predict_8mer(allele, seq):
     reg = find_model(aw)
     if reg is None:
         print ('Locals do not have model for this allele.')
-        return
+        return 0.5
     
     #predict
     scores = reg.predict(X)
@@ -150,7 +156,7 @@ def predict_non9mer(allele, seq):
     reg = find_model(aw)
     if reg is None:
         print ('Locals do not have model for this allele.')
-        return
+        return 0.5
     
     #predict
     scores = reg.predict(X)
@@ -177,12 +183,45 @@ def LengthFree_predictor(allele, data):
 
     return auc
 
-allele = "HLA-A*01:01"
-test_data_8 = ep.get_training_set(allele, length=8)
-test_data_10 = ep.get_training_set(allele, length=10)
-test_data_11 = ep.get_training_set(allele, length=11)
-LengthFree_predictor(allele, test_data_11)
+## Primary Test ##
+# allele = "HLA-A*01:01"
+# test_data_8 = ep.get_training_set(allele, length=8)
+# test_data_10 = ep.get_training_set(allele, length=10)
+# test_data_11 = ep.get_training_set(allele, length=11)
+# LengthFree_predictor(allele, test_data_11)
+
+## Secondary Test ##
+dataset_filename = os.path.join(data_path, "evalset_8mer_normalization.csv")
+df = pd.read_csv(dataset_filename)
+alleles = df.allele.unique()
+# print(alleles)
+allele = alleles[10]
+print(allele)
+data = df.loc[df['allele'] == allele]
+result = LengthFree_predictor(allele, data)
+
+
+## beita Test ##
+def Process_LengthFree_Prediction(dataset_filename):
+    auc_list = []
+    df = pd.read_csv(dataset_filename)
+    alleles = df.allele.unique()
+    for allele in alleles:
+        data = df.loc[df['allele'] == allele]
+        result = LengthFree_predictor(allele, data)
+        # print(result)
+        auc_list.append(result)
     
+    print(auc_list)
+    # print(auc_list)
+    # print(alleles.tolist())
+    #Write Result
+    auc_df = pd.DataFrame(auc_list, index = alleles.tolist())
+    print(auc_df)
+    
+
+# dataset_filename = os.path.join(data_path, "evalset_8mer_normalization.csv")
+# Process_LengthFree_Prediction(dataset_filename)
 
 def get_evaluation_by_allele():
     

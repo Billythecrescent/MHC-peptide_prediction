@@ -38,8 +38,8 @@ def data_8mer_normalization(filename):
     return new_df 
 
 # ##normalize_8mer
-# file = os.path.join(data_path, "evalset_8mers.csv")
-# # print(file)
+file = os.path.join(data_path, "evalset_8mers.csv")
+print(file)
 # # print(data_8mer_normalization(file))
 # df = data_8mer_normalization(file)
 # datasetDistribute(df, 'csv', "data_8mer_distribution")
