@@ -5,8 +5,12 @@ import numpy as np
 import pandas as pd
 import epitopepredict as ep
 
-module_path = os.path.dirname(os.path.abspath(__file__)) #path to module
-data_path = os.path.join(os.path.abspath(os.path.dirname(module_path)),"data")
+module_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__))) #path to module
+data_path = os.path.dirname(os.path.abspath(__file__))
+
+sys.path.append(module_path)
+from datasetAttribute import datasetDistribute
+
 
 def data_8mer_normalization(filename):
     df = pd.read_csv(filename)
@@ -38,6 +42,7 @@ def data_8mer_normalization(filename):
 # # print(file)
 # # print(data_8mer_normalization(file))
 # df = data_8mer_normalization(file)
+# datasetDistribute(df, 'csv', "data_8mer_distribution")
 # df.to_csv(os.path.join(data_path, 'evalset_8mer_normalization.csv'))
 
 def data_9mer_normalization(filename):
@@ -59,6 +64,7 @@ def data_9mer_normalization(filename):
 # # print(file)
 # # print(data_9mer_normalization(file))
 # df = data_9mer_normalization(file)
+# datasetDistribute(df, 'csv', "data_9mer_distribution")
 # df.to_csv(os.path.join(data_path, 'evalset_9mer_normalization.csv'))
 
 def data_10mer_normalization(filename):
@@ -80,6 +86,7 @@ def data_10mer_normalization(filename):
 # # # print(file)
 # # print(data_10mer_normalization(file))
 # df = data_10mer_normalization(file)
+# datasetDistribute(df, 'csv', "data_10mer_distribution")
 # df.to_csv(os.path.join(data_path, 'evalset_10mer_normalization.csv'))
 
 def data_11mer_normalization(filename):
@@ -97,8 +104,9 @@ def data_11mer_normalization(filename):
     return new_df
 
 # ##normalize_11mer
-file = os.path.join(data_path, "evalset_11mers.csv")
-# # print(file)
-# print(data_11mer_normalization(file))
-df = data_11mer_normalization(file)
-df.to_csv(os.path.join(data_path, 'evalset_11mer_normalization.csv'))
+# file = os.path.join(data_path, "evalset_11mers.csv")
+# # # print(file)
+# # print(data_11mer_normalization(file))
+# df = data_11mer_normalization(file)
+# datasetDistribute(df, 'csv', "data_11mer_distribution")
+# df.to_csv(os.path.join(data_path, 'evalset_11mer_normalization.csv'))

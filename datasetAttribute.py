@@ -23,7 +23,7 @@ def datasetAllele(dataset, rename = False, be_substituted = '', substitute = '')
     else:
         return alleles
 
-def datasetDistribute(dataset, format = None):
+def datasetDistribute(dataset, format = None, output_filename = None):
     '''
     Analyze the distrubution of the data frequency of alleles
         in the dataset
@@ -35,12 +35,15 @@ def datasetDistribute(dataset, format = None):
     allele_unique, allele_counts = np.unique(alleles, return_counts=True)
     allele_counts_2d = pd.DataFrame(allele_counts, columns = ['counts'], index = allele_unique)
     if format == 'csv':
-        allele_counts_2d.to_csv(os.path.join('dataset_alletes_distribution.csv'))
+        if output_filename == None:
+            allele_counts_2d.to_csv(os.path.join(os.getcwd(), 'dataset_alletes_distribution.csv'))
+        elif output_filename != None:
+            allele_counts_2d.to_csv(os.path.join(os.getcwd(), output_filename + ".csv"))
     return allele_counts_2d
 
 
 train_set = ep.get_training_set(length=8)
 evalset = ep.get_evaluation_set()
 # print(evalset)
-print(datasetAllele(train_set, True))
+# print(datasetAllele(train_set, True))
 # print(datasetDistribute(train_set, 'csv'))
