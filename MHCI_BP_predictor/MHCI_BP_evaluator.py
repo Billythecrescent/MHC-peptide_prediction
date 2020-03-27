@@ -220,8 +220,8 @@ def Process_LengthFree_Prediction(dataset_filename):
     print(auc_df)
     
 
-dataset_filename = os.path.join(data_path, "evalset_11mer_normalization.csv")
-Process_LengthFree_Prediction(dataset_filename)
+# dataset_filename = os.path.join(data_path, "evalset_11mer_normalization.csv")
+# Process_LengthFree_Prediction(dataset_filename)
 
 def get_evaluation_by_allele():
     
@@ -246,7 +246,7 @@ def get_evaluation_by_allele():
     # print(comp)
     # print(test_alleles.tolist())
     #Write Result
-    comp_df = pd.DataFrame(comp, index = test_alleles.tolist())
+    # comp_df = pd.DataFrame(comp, index = test_alleles.tolist())
     # print(comp_df)
 
 # main()

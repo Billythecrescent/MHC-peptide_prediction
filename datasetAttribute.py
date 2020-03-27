@@ -7,6 +7,7 @@ import pandas as pd
 import epitopepredict as ep
 
 module_path = os.path.abspath(os.path.dirname(__file__)) #path to module
+data_path = os.path.join(module_path,"data") #code\MHC-peptide_prediction\data
 
 def datasetAllele(dataset, rename = False, be_substituted = '', substitute = ''):
     '''
@@ -42,9 +43,28 @@ def datasetDistribute(dataset, format = None, output_filename = None):
             allele_counts_2d.to_csv(os.path.join(module_path, output_filename + ".csv"))
     return allele_counts_2d
 
+def datasetOutput(dataset, format = None, output_filename = None):
+    '''
+    '''
+    if format == "csv":
+        if output_filename == None:
+            dataset.to_csv(os.path.join(module_path, "dataset_output.csv"))
+        elif output_filename != None:
+            dataset.to_csv(os.path.join(module_path, output_filename + ".csv"))
 
-train_set = ep.get_training_set(length=8)
-evalset = ep.get_evaluation_set()
+# train_set1 = ep.get_training_set(length=8)
+# train_set2 = ep.get_training_set(length=10)
+# train_set3 = ep.get_training_set(length=11)
+# evalset = ep.get_evaluation_set()
 # print(evalset)
 # print(datasetAllele(train_set, True))
-print(datasetDistribute(evalset, 'csv', "epitopepredict_9mer_evalset"))
+data8mer = pd.read_csv(os.path.join(data_path, "ep_8mer_training_data.csv"))
+print(datasetDistribute(data8mer, 'csv', "Distri_ep_8mer_training_data"))
+# datasetOutput(train_set1, "csv", "ep_8mer_training_data.csv")
+# datasetOutput(train_set2, "csv", "ep_10mer_training_data.csv")
+# datasetOutput(train_set3, "csv", "ep_11mer_training_data.csv")
+
+
+# IEDB_mhci_dataset = pd.read_csv(os.path.join(data_path, "bdata.20130222.mhci.csv"))
+# # print(IEDB_mhci_dataset)
+# print(datasetDistribute(IEDB_mhci_dataset, 'csv', "distribution_bdata.20130222.mhci"))
