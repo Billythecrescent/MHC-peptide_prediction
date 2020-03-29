@@ -16,7 +16,7 @@ data_path = os.path.join(module_path,"data") #code\MHC-peptide_prediction\data
 
 def get_allele_names(data):
     a = data.allele.value_counts()
-    a =a[a>=20]
+    a =a[a>=1]
     return list(a.index)
 
 def find_model(allele, length):
@@ -30,7 +30,7 @@ def find_model(allele, length):
 def build_predictor(training_data, allele, encoder, hidden_node):
 
     data = training_data[training_data['allele'] == allele]
-    if len(data) < 20:
+    if len(data) < 1:
         return
 
     # #write training dataframe to csv file
@@ -61,13 +61,6 @@ def build_prediction_model(training_data, length, hidden_node):
         if reg is not None:
             joblib.dump(reg, fname, protocol=2)
 
-def build_model_controller():
-    data8mer = pd.read_csv(os.path.join(data_path, "ep_8mer_training_data.csv"))
-    # print(data8mer)
-    build_prediction_model(data8mer, 8, 20)
-
-# build_model_controller()
-
 def evaluate_predictor(X, y, allele, length):
 
     #print (len(data))
@@ -87,7 +80,7 @@ def evaluation_prediction_model(dataset_filename, length):
     auc_list = []
     df = pd.read_csv(dataset_filename)
     alleles = df.allele.unique()
-    # print(alleles)
+    print(alleles, len(alleles))
     for allele in alleles:
 
         data = df.loc[df['allele'] == allele]
@@ -97,12 +90,24 @@ def evaluation_prediction_model(dataset_filename, length):
         result = evaluate_predictor(X, y, aw, length)
         auc_list.append(result)
 
-    # print(auc_list)
+    print(auc_list, len(auc_list))
     # print(alleles.tolist())
     #Write Result
     auc_df = pd.DataFrame(auc_list, index = alleles.tolist())
     auc_df.columns = ['auc']
     print(auc_df)
 
-dataset_filename = os.path.join(data_path, "evalset_8mer_normalization.csv")
-evaluation_prediction_model(dataset_filename, 8)
+
+## Build predictor ##
+def build_model_controller():
+    # data8mer = pd.read_csv(os.path.join(data_path, "ep_8mer_training_data.csv"))
+    data10mer = pd.read_csv(os.path.join(data_path, "ep_10mer_training_data.csv"))
+    # print(data8mer)
+    build_prediction_model(data10mer, 10, 20)
+
+build_model_controller()
+
+## Evaluate predictor ##
+# dataset_filename = os.path.join(data_path, "evalset_8mer_normalization.csv")
+dataset_filename = os.path.join(data_path, "evalset_10mer_normalization.csv")
+evaluation_prediction_model(dataset_filename, 10)
