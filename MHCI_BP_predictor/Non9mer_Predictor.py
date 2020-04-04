@@ -101,13 +101,14 @@ def evaluation_prediction_model(dataset_filename, length):
 ## Build predictor ##
 def build_model_controller():
     # data8mer = pd.read_csv(os.path.join(data_path, "ep_8mer_training_data.csv"))
-    data10mer = pd.read_csv(os.path.join(data_path, "ep_10mer_training_data.csv"))
+    # data10mer = pd.read_csv(os.path.join(data_path, "ep_10mer_training_data.csv"))
+    data11mer = pd.read_csv(os.path.join(data_path, "ep_11mer_training_data.csv"))
     # print(data8mer)
-    build_prediction_model(data10mer, 10, 20)
+    build_prediction_model(data11mer, 11, 20)
 
 build_model_controller()
 
 ## Evaluate predictor ##
 # dataset_filename = os.path.join(data_path, "evalset_8mer_normalization.csv")
-dataset_filename = os.path.join(data_path, "evalset_10mer_normalization.csv")
-evaluation_prediction_model(dataset_filename, 10)
+dataset_filename = os.path.join(data_path, "evalset_11mer_normalization.csv")
+evaluation_prediction_model(dataset_filename, 11)

@@ -58,8 +58,8 @@ def datasetOutput(dataset, format = None, output_filename = None):
 # evalset = ep.get_evaluation_set()
 # print(evalset)
 # print(datasetAllele(train_set, True))
-data10mer = pd.read_csv(os.path.join(data_path, "ep_10mer_training_data.csv"))
-print(datasetDistribute(data10mer, 'csv', "Distri_ep_10mer_training_data"))
+data10mer = pd.read_csv(os.path.join(data_path, "ep_11mer_training_data.csv"))
+print(datasetDistribute(data10mer, 'csv', "Distri_ep_11mer_training_data"))
 
 
 # IEDB_mhci_dataset = pd.read_csv(os.path.join(data_path, "bdata.20130222.mhci.csv"))
