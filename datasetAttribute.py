@@ -25,7 +25,7 @@ def datasetAllele(dataset, rename = False, be_substituted = '', substitute = '')
     else:
         return alleles
 
-def datasetDistribute(dataset, format = None, output_filename = None):
+def datasetDistribute(dataset, format = None, output_filename = None, IC50threshold = 500):
     '''
     Analyze the distrubution of the data frequency of alleles
         in the dataset
@@ -35,13 +35,28 @@ def datasetDistribute(dataset, format = None, output_filename = None):
     alleles = dataset.allele.to_numpy()
     # print(alleles)
     allele_unique, allele_counts = np.unique(alleles, return_counts=True)
-    allele_counts_2d = pd.DataFrame(allele_counts, columns = ['counts'], index = allele_unique)
+
+    binder_counts = []
+    for allele in allele_unique:
+        allele_df = dataset.loc[dataset['allele'] == allele]
+        allele_binder_df = allele_df.loc[allele_df['ic50'] < IC50threshold]
+        binder_counts.append(len(allele_binder_df))
+        # print(allele_binder_df)
+        # print(len(allele_binder_df))
+    
+    # print(len(allele_counts), len(binder_counts))
+    Combined_counts = np.array([allele_counts, binder_counts], np.int64)
+    Combined_counts_2d = pd.DataFrame(Combined_counts.T, columns = ['total_counts', 'binder_counts'], index = allele_unique)
+    print(Combined_counts_2d)
+
     if format == 'csv':
         if output_filename == None:
-            allele_counts_2d.to_csv(os.path.join(module_path, 'dataset_alletes_distribution.csv'))
+            Combined_counts_2d.to_csv(os.path.join(module_path, 'dataset_alletes_distribution.csv'))
         elif output_filename != None:
-            allele_counts_2d.to_csv(os.path.join(module_path, output_filename + ".csv"))
-    return allele_counts_2d
+            Combined_counts_2d.to_csv(os.path.join(module_path, output_filename + ".csv"))
+    return Combined_counts_2d
+
+
 
 def datasetOutput(dataset, format = None, output_filename = None):
     '''
@@ -58,9 +73,11 @@ def datasetOutput(dataset, format = None, output_filename = None):
 # evalset = ep.get_evaluation_set()
 # print(evalset)
 # print(datasetAllele(train_set, True))
-data10mer = pd.read_csv(os.path.join(data_path, "ep_11mer_training_data.csv"))
-print(datasetDistribute(data10mer, 'csv', "Distri_ep_11mer_training_data"))
+# data10mer = pd.read_csv(os.path.join(data_path, "ep_11mer_training_data.csv"))
+# print(datasetDistribute(data10mer, 'csv', "Distri_ep_11mer_training_data"))
 
+data_allmer = pd.read_csv(os.path.join(data_path, "mhci.20130222.csv"))
+datasetDistribute(data_allmer, 'csv', "Distri_mhci_allmer_data")
 
 # IEDB_mhci_dataset = pd.read_csv(os.path.join(data_path, "bdata.20130222.mhci.csv"))
 # # print(IEDB_mhci_dataset)
