@@ -106,9 +106,10 @@ def build_model_controller():
     # print(data8mer)
     build_prediction_model(data11mer, 11, 20)
 
-build_model_controller()
+
+# build_model_controller()
 
 ## Evaluate predictor ##
 # dataset_filename = os.path.join(data_path, "evalset_8mer_normalization.csv")
-dataset_filename = os.path.join(data_path, "evalset_11mer_normalization.csv")
-evaluation_prediction_model(dataset_filename, 11)
+# dataset_filename = os.path.join(data_path, "evalset_11mer_normalization.csv")
+# evaluation_prediction_model(dataset_filename, 11)
