@@ -109,8 +109,7 @@ def AddRandomDataToDataset(DatasetFile, LengthList = [8, 9, 10, 11], SeqNum = 10
     randompeptidesOnLength = {}
     affinityOnLength = {}
 
-    if os.path.exists(os.path.join(current_path, "RandomPeptideFile.txt")) \
-        and os.path.exists(os.path.join(current_path, "affinityFile.txt")):
+    if os.path.exists(os.path.join(current_path, "PeptideAffinityFile.txt")):
         store_flag = 0
         random_flag = 0
     else:
@@ -125,87 +124,99 @@ def AddRandomDataToDataset(DatasetFile, LengthList = [8, 9, 10, 11], SeqNum = 10
             peptide_df = randomSeqs_df.peptide
             scores = PrePredict(peptide_df, length)
             affinityOnLength[length] = scores.tolist()
+        
+        ##use threshould to filter those which do not match the criteria (>5000nM, 0.214) and log the number and each index
+        NotMatchNum = {8:0, 9:0, 10:0, 11:0}
+        # NotmatchIndex = {8:[], 9:[], 10:[], 11:[]}
+        PeptideAffinity = {length: list(zip(randompeptidesOnLength[length], affinityOnLength[length])) for length in range(8, 12)}
+        for length in LengthList: #list copy
+            pepAffs = PeptideAffinity[length]
+            for pepAff in pepAffs[:]:
+                if pepAff[-1] >= Log50Kthreshold:
+                    # NotmatchIndex[length].append(i)
+                    PeptideAffinity[length].remove(pepAff)
+                    NotMatchNum[length] = NotMatchNum[length] + 1
+            # for index in NotmatchIndex[length]:
+            #     randompeptidesOnLength[length].pop(index)
+            #     affinityOnLength[length].pop(index)
+        # print(NotmatchIndex)
+        # print(NotMatchNum)
+        for length in LengthList:
+            while NotMatchNum[length] != 0:
+                newNotMatchNum = 0
+                randomSeqs = randomPeptideGenerator(11, length, NotMatchNum[length])
+                randomSeqs_df = pd.DataFrame(randomSeqs, columns = ['peptide'])
+                peptide_df = randomSeqs_df.peptide
+                scores = PrePredict(peptide_df, length).tolist()
+                SeqScores = list(zip(randomSeqs, scores))
+                for SeqScore in SeqScores[:]:
+                    if SeqScore[-1] >= Log50Kthreshold:
+                        newNotMatchNum = newNotMatchNum + 1
+                        SeqScores.remove(SeqScore)
+                # add the newly generated matched random peptides and affinity to the list 
+                PeptideAffinity[length] = PeptideAffinity[length] + SeqScores
+                #update notMatch number
+                NotMatchNum[length] = newNotMatchNum
+        # Test = pd.DataFrame(PeptideAffinity[8], columns = ['peptide', 'log50k'])
+        # Test.to_csv(os.path.join(current_path, "test.csv"))
+
     else:
-        randompeptidesFile = open(os.path.join(current_path, "RandomPeptideFile.txt"), "r", encoding='UTF-8')
-        affinityFile = open(os.path.join(current_path, "affinityFile.txt"), "r", encoding='UTF-8')
-        randompeptidesOnLength = json.loads(randompeptidesFile.read())
-        affinityOnLength = json.loads(affinityFile.read())
+        # randompeptidesFile = open(os.path.join(current_path, "RandomPeptideFile.txt"), "r", encoding='UTF-8')
+        # affinityFile = open(os.path.join(current_path, "affinityFile.txt"), "r", encoding='UTF-8')
+        # randompeptidesOnLength = json.loads(randompeptidesFile.read())
+        # affinityOnLength = json.loads(affinityFile.read())
+        PeptideAffinityFile = open(os.path.join(current_path, "PeptideAffinityFile.txt"), "r", encoding='UTF-8')
+        PeptideAffinity = json.loads(PeptideAffinityFile.read())
     
+    # PeptideAffinity = json.dumps(randompeptidesOnLength)
+    # PeptideAffinityFile = open(os.path.join(current_path, "PeptideAffinityFile.txt"), "w", encoding='UTF-8')
+    # PeptideAffinityFile.write(PeptideAffinity)
+    # PeptideAffinityFile.close()
+
     ##chang non-int-type keys to int-type keys
     #Owing to json load bugs, int-type keys have been transformed to str-type
-    keys = list(randompeptidesOnLength.keys())
+    keys = list(PeptideAffinity.keys())
     for key in keys:
         if type(key) != int:
-            randompeptidesOnLength[int(key)] = randompeptidesOnLength.pop(key)
+            PeptideAffinity[int(key)] = PeptideAffinity.pop(key)
         else:
             continue
 
-    keys = list(affinityOnLength.keys())
+    keys = list(PeptideAffinity.keys())
     for key in keys:
         if type(key) != int:
-            affinityOnLength[int(key)] = affinityOnLength.pop(key)
+            PeptideAffinity[int(key)] = PeptideAffinity.pop(key)
         else:
             continue
+    
+    # print(list(PeptideAffinity.keys()))
 
     if store_flag:
-        randompeptidesOnLength = json.dumps(randompeptidesOnLength)
-        affinityOnLength = json.dumps(affinityOnLength)
-        randompeptidesFile = open(os.path.join(current_path, "RandomPeptideFile.txt"), "w", encoding='UTF-8')
-        affinityFile = open(os.path.join(current_path, "affinityFile.txt"), "w", encoding='UTF-8')
-        randompeptidesFile.write(randompeptidesOnLength)
-        affinityFile.write(affinityOnLength)
-        randompeptidesFile.close()
-        affinityFile.close()
+        # randompeptidesOnLength = json.dumps(randompeptidesOnLength)
+        # affinityOnLength = json.dumps(affinityOnLength)
+        # randompeptidesFile = open(os.path.join(current_path, "RandomPeptideFile.txt"), "w", encoding='UTF-8')
+        # affinityFile = open(os.path.join(current_path, "affinityFile.txt"), "w", encoding='UTF-8')
+        # randompeptidesFile.write(randompeptidesOnLength)
+        # affinityFile.write(affinityOnLength)
+        # randompeptidesFile.close()
+        # affinityFile.close()
+        PeptideAffinity = json.dumps(PeptideAffinity)
+        PeptideAffinityFile = open(os.path.join(current_path, "PeptideAffinityFile.txt"), "w", encoding='UTF-8')
+        PeptideAffinityFile.write(PeptideAffinity)
+        PeptideAffinityFile.close()
     
-    ##use threshould to filter those which do not match the criteria (>5000nM, 0.214) and log the number and each index
-    NotMatchNum = {8:0, 9:0, 10:0, 11:0}
-    # NotmatchIndex = {8:[], 9:[], 10:[], 11:[]}
-    PeptideAffinity = {length: list(zip(randompeptidesOnLength[length], affinityOnLength[length])) for length in range(8, 12)}
-    for length in LengthList: #list copy
-        pepAffs = PeptideAffinity[length]
-        for pepAff in pepAffs[:]:
-            if pepAff[-1] >= Log50Kthreshold:
-                # NotmatchIndex[length].append(i)
-                PeptideAffinity[length].remove(pepAff)
-                NotMatchNum[length] = NotMatchNum[length] + 1
-        # for index in NotmatchIndex[length]:
-        #     randompeptidesOnLength[length].pop(index)
-        #     affinityOnLength[length].pop(index)
-    # print(NotmatchIndex)
-    # print(NotMatchNum)
-    for length in LengthList:
-        while NotMatchNum[length] != 0:
-            newNotMatchNum = 0
-            randomSeqs = randomPeptideGenerator(11, length, NotMatchNum[length])
-            randomSeqs_df = pd.DataFrame(randomSeqs, columns = ['peptide'])
-            peptide_df = randomSeqs_df.peptide
-            scores = PrePredict(peptide_df, length).tolist()
-            SeqScores = list(zip(randomSeqs, scores))
-            for SeqScore in SeqScores[:]:
-                if SeqScore[-1] >= Log50Kthreshold:
-                    newNotMatchNum = newNotMatchNum + 1
-                    SeqScores.remove(SeqScore)
-            # add the newly generated matched random peptides and affinity to the list 
-            PeptideAffinity[length] = PeptideAffinity[length] + SeqScores
-            #update notMatch number
-            NotMatchNum[length] = newNotMatchNum
-
-    Test = pd.DataFrame(PeptideAffinity[8], columns = ['peptide', 'log50k'])
-    Test.to_csv(os.path.join(current_path, "test.csv"))
-
-    ##generate new peptides which match the criteria and replace old ones, refresh corresponding ic50 value
     
     #generate allele column in Added RandomSeq Dataframe
     #colum order priority: allele, length
     allele_column = []
-    peptide_column = []
+    peptideAffinity_column = []
     for allele in alleles:
         allele_column = allele_column + [allele]*SeqNum*len(LengthList)
         allele_index = alleles.index(allele)
-        allele_peptide = []
+        allele_peptide_affinity = []
         for length in LengthList:
-            allele_peptide = allele_peptide + randompeptidesOnLength[length][(allele_index*SeqNum):((allele_index+1)*SeqNum)]
-        peptide_column = peptide_column + allele_peptide
+            allele_peptide_affinity = allele_peptide_affinity + PeptideAffinity[length][(allele_index*SeqNum):((allele_index+1)*SeqNum)]
+        peptideAffinity_column = peptideAffinity_column + allele_peptide_affinity
     # print(len(peptide_column))
 
     #infinity column
