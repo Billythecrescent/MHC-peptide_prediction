@@ -1,10 +1,10 @@
 '''
 File: randomPeptideGenerator.py
 Author: Mucun Hou
-Date: Apr 6, 2020
+Date: Apr 6 - 9, 2020
 Description: This script will generate random amino acid sequences with a
              given GC content either based on a amino acid usage probabitliy
-Based on NullSeq_Functions.py by Sophia Liu
+Randomly generation algorithm is based on NullSeq_Functions.py by Sophia Liu
 '''
 from Bio.Seq import Seq
 import NullSeq_Functions as NS
@@ -68,6 +68,19 @@ def randomPeptideGenerator(TranscribeTableNum, l, seqNum):
 # randomAASequences = randomPeptideGenerator(11, 8, 100)
 
 def find_model(allele, length):
+    '''Find model for alleles of different lengths. 9mer: ../model/  non9mer: ../model/Non9mer/
+    SHOULD "import joblib" first
+    allele: string
+        standardized allele name (by regex according to the prediction method)
+        It is different from true allele because Windows os file system
+    length: int
+        the length of the inquery peptide
+
+    Return
+    ------
+    reg: MLPRegressor
+        the regression predictor
+    '''
     if length != 9:
         fname = os.path.join(os.path.join(model_path, "Non9mer"), allele + "-" + str(length) +'.joblib')
     elif length == 9:
@@ -80,6 +93,22 @@ def find_model(allele, length):
         return
 
 def PrePredict(peptide_df, length):
+    '''Prepredict the randomly generated peptide by existed model
+    This process is for the filtering of random sequences (disgarding binder)
+    For 8mer, use H-20Kb by default
+    For 9mer and 10mer, use HLA-A*01:01 by default
+    For 11mer, use Mamu-A*02:01 by default 
+
+    peptide_df: DataFrame
+        the peptide dataframe from the dataset
+    length: int
+        the length of the peptides in $peptide_df$
+
+    Return:
+    ------
+    scores: double[]
+        The prepredicted scores of the input peptides
+    '''
     X = peptide_df.apply(lambda x: pd.Series(MHCI_BP_evaluator.blosum_encode(x)),1)
     if length == 8:
         allele = "H-2-Kb"
@@ -104,6 +133,13 @@ def AddRandomDataToDataset(DatasetFile, LengthList = [8, 9, 10, 11], SeqNum = 10
         the list of the lengths to be added of each allele
     SeqNum: int
         the number of random sequences added to each length of each allele
+
+    Return:
+    -----
+    CombinedDatframe:   DataFrame
+        The combined dataframe of natural data from DatasetFile and random generated data
+    IF output_filename is not none
+    THEN generate csv file in the current file
     '''
     Dataset = pd.read_csv(DatasetFile)
     alleles = Dataset.allele.unique().tolist()
