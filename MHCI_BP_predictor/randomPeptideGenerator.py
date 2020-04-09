@@ -10,9 +10,11 @@ from Bio.Seq import Seq
 import NullSeq_Functions as NS
 import argparse
 import os.path, re
+from math import log
 import json
 
 import pandas as pd
+import numpy as np
 import joblib
 import MHCI_BP_evaluator
 
@@ -94,7 +96,7 @@ def PrePredict(peptide_df, length):
         scores = reg.predict(X)
     return scores
 
-def AddRandomDataToDataset(DatasetFile, LengthList = [8, 9, 10, 11], SeqNum = 100, Log50Kthreshold = .361):
+def AddRandomDataToDataset(DatasetFile, LengthList = [8, 9, 10, 11], SeqNum = 100, Log50Kthreshold = .361, output_filename = None):
     '''Add artificial random peptide affinity data to original dataset
     DatasetFile: string
         the file path of the csv format afinity dataset
@@ -168,11 +170,6 @@ def AddRandomDataToDataset(DatasetFile, LengthList = [8, 9, 10, 11], SeqNum = 10
         PeptideAffinityFile = open(os.path.join(current_path, "PeptideAffinityFile.txt"), "r", encoding='UTF-8')
         PeptideAffinity = json.loads(PeptideAffinityFile.read())
     
-    # PeptideAffinity = json.dumps(randompeptidesOnLength)
-    # PeptideAffinityFile = open(os.path.join(current_path, "PeptideAffinityFile.txt"), "w", encoding='UTF-8')
-    # PeptideAffinityFile.write(PeptideAffinity)
-    # PeptideAffinityFile.close()
-
     ##chang non-int-type keys to int-type keys
     #Owing to json load bugs, int-type keys have been transformed to str-type
     keys = list(PeptideAffinity.keys())
@@ -209,6 +206,7 @@ def AddRandomDataToDataset(DatasetFile, LengthList = [8, 9, 10, 11], SeqNum = 10
     #generate allele column in Added RandomSeq Dataframe
     #colum order priority: allele, length
     allele_column = []
+    #peptideAffinity_column includes the peptide and cooresponding affinity (ic50)
     peptideAffinity_column = []
     for allele in alleles:
         allele_column = allele_column + [allele]*SeqNum*len(LengthList)
@@ -219,16 +217,39 @@ def AddRandomDataToDataset(DatasetFile, LengthList = [8, 9, 10, 11], SeqNum = 10
         peptideAffinity_column = peptideAffinity_column + allele_peptide_affinity
     # print(len(peptide_column))
 
-    #infinity column
-    ic50_colum = []
+    ##create "artificial" tag
+    tag_column = ["artificial"]*len(LengthList)*SeqNum*len(alleles)
+    species_column = ['random']*len(LengthList)*SeqNum*len(alleles)
 
-    ##predict the affinity for each peptide
+    length_column = []
+    for length in LengthList:
+        length_column = length_column + [str(length)]*SeqNum
+    length_column = length_column * len(alleles)
 
-    ##ic50_colum is done
+    ##Combine column and build dataframe
+    DataText = np.array([species_column, allele_column, length_column, tag_column]).T
+    RandomDataFrame = pd.DataFrame(np.hstack((DataText, np.array(peptideAffinity_column))), columns = ['species','allele','peptide_length','source','peptide','log50k'])
+    # print(RandomDataFrame)
+    # RandomDataFrame.to_csv(os.path.join(current_path, "test_df.csv"))
 
+    ##Process natural dataset and random dataset
+    NaturalDataFrame = pd.DataFrame(Dataset, columns = ['species','allele','peptide_length','source','peptide'])
+    Data_ic50 = Dataset.ic50.tolist()
+    Data_log50k = []
+    for datum in Data_ic50:
+        datum_log50k =  1 - log(datum)/log(50000)
+        Data_log50k.append(datum_log50k)
+    Data_log50k = pd.DataFrame(np.array(Data_log50k).T, columns = ['log50k'])
+    NaturalDataFrame = pd.concat([NaturalDataFrame, Data_log50k], axis=1)
 
+    CombinedDatframe = pd.concat([NaturalDataFrame, RandomDataFrame], axis=0)
+    print(CombinedDatframe)
+
+    if output_filename != None:
+        output_path = os.path.join(current_path, output_filename + ".csv")
+        CombinedDatframe.to_csv(output_path)
 
 aller_mhci = os.path.join(data_path, "mhci.20130222.csv")
-AddRandomDataToDataset(aller_mhci)
+AddRandomDataToDataset(aller_mhci, output_filename = "modified_mhc.20130222")
 
 
