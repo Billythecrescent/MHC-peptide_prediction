@@ -5,10 +5,18 @@ import numpy as np
 import pandas as pd
 import epitopepredict as ep
 
-def dataset2fasta(dataset, filename):
+def dataset2fasta(dataset, filePath):
+    '''Convert MHC affinity DataFrame to fasta file
+    dataset: DataFrame
+        MHC affinity data, must contain 'allele' and 'peptide' columns
+    filename: string
+        The output file path
+    
+    Return:
+    ------
+    True
     '''
-    '''
-    f = open(filename,'w')
+    f = open(filePath,'w')
     # peptides = dataset.peptide
     # alleles = dataset.allele
     # datapair = dict(zip(alleles,peptides)) 
@@ -18,6 +26,7 @@ def dataset2fasta(dataset, filename):
         # print(sample['peptide'])
         print('>' + sample['allele'], file = f)
         print(sample['peptide'] + '\n', file = f)
+    f.close()
 
     return True
 
