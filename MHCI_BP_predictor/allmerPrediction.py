@@ -212,10 +212,26 @@ def RandomStartPredictor(dataset, allele, blosum_encode, hidden_node):
     y = dataset.log50k
 
     ##cross_validation not done
-    cv_results = cross_validate(reg, X, y, cv=5, scoring = ('roc_auc', 'neg_mean_squared_error'), return_estimator=True)
+    ferror = os.path.join(current_path, "randomStart_neg_mean_squared_error.csv")
+    fauc = os.path.join(current_path, "randomStart_roc_auc.csv")
+    fr2 = os.path.join(current_path, "existStart_r2.csv")
+    square_error_list = []
+    auc_list = []
+    r2_list = []
+    for i in range(6):
+        cv_results = cross_validate(reg, X, y, cv=5, scoring = ('roc_auc', 'neg_mean_squared_error', 'r2'), return_estimator=True)
+        square_error_list.append(cv_results['test_neg_mean_squared_error'])
+        auc_list.append(cv_results['test_roc_auc'])
+        r2_list.append(cv_results['test_r2'])
+        reg = cv_results['estimator']
+        print(cv_results.keys())
+    auc_df = pd.DataFrame(auc_list, columns = ['1-fold', '2-fold', '3-fold', '4-fold', '5-fold'])
+    square_error_df = pd.DataFrame(square_error_list, columns = ['1-fold', '2-fold', '3-fold', '4-fold', '5-fold'])
+    r2_df = pd.DataFrame(r2_list, columns = ['1-fold', '2-fold', '3-fold', '4-fold', '5-fold'])
     
-    reg = cv_results['estimator']
-    print(cv_results.keys())
+    auc_df.to_csv(fauc)
+    square_error_df.to_csv(ferror)
+    r2_df.to_csv(fr2)
     
     # reg.fit(X , y)
 
@@ -263,8 +279,27 @@ def ExistStartPredictor(dataset, allele, blosum_encode):
 
     ##cross_validation
     #not done
-    cv_results = cross_validate(reg, X, y, cv=5, scoring = ('roc_auc', 'neg_mean_squared_error'), return_estimator=True)
-    print(cv_results)
+    ##cross_validation not done
+    ferror = os.path.join(current_path, "existStart_neg_mean_squared_error.csv")
+    fauc = os.path.join(current_path, "existStart_roc_auc.csv")
+    fr2 = os.path.join(current_path, "existStart_r2.csv")
+    square_error_list = []
+    auc_list = []
+    r2_list = []
+    for i in range(3):
+        cv_results = cross_validate(reg, X, y, cv=5, scoring = ('roc_auc', 'neg_mean_squared_error', 'r2'), return_estimator=True)
+        square_error_list.append(cv_results['test_neg_mean_squared_error'])
+        auc_list.append(cv_results['test_roc_auc'])
+        r2_list.append(cv_results['test_r2'])
+        reg = cv_results['estimator']
+        print(cv_results.keys())
+    auc_df = pd.DataFrame(auc_list, columns = ['1-fold', '2-fold', '3-fold', '4-fold', '5-fold'])
+    square_error_df = pd.DataFrame(square_error_list, columns = ['1-fold', '2-fold', '3-fold', '4-fold', '5-fold'])
+    r2_df = pd.DataFrame(r2_list, columns = ['1-fold', '2-fold', '3-fold', '4-fold', '5-fold'])
+
+    auc_df.to_csv(fauc)
+    square_error_df.to_csv(ferror)
+    r2_df.to_csv(fr2)
     
     # reg.fit(X , y)
 
