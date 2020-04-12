@@ -10,7 +10,7 @@ Description: This script is the update version of Non9mer_Predictor, as in
 import os, re
 import pandas as pd
 import numpy as np
-from scipy.stats import pearsonr
+# from scipy.stats import pearsonr
 from sklearn.utils import shuffle
 from sklearn.neural_network import MLPRegressor
 from sklearn.model_selection import cross_validate
@@ -138,7 +138,7 @@ def AllmerEncoder(allele, seq, blosum_encode):
 
     return X, seq_list
 
-def AllmerPrepredict(allele, seq, blosum_encode, reg):
+def AllmerPrepredict(allele, seq, blosum_encode, reg, state):
     '''Preprediction of the peptide, to find out the binding core and encode the peptide
     allele: string 
         the name of the allele
@@ -148,6 +148,10 @@ def AllmerPrepredict(allele, seq, blosum_encode, reg):
         the name of the blosum_encode function
     reg: regression predictor
         the initialized regression predictor
+    state: boolean
+        the indicator of whether it is random start of exist start
+        True if exist-start
+        False if random-start
 
     Return:
     -------
@@ -155,9 +159,14 @@ def AllmerPrepredict(allele, seq, blosum_encode, reg):
         the only true encoding of the sequence
     '''
     X, seq_list = AllmerEncoder(allele, seq, blosum_encode)
-    
+    seq_df = pd.DataFrame(seq_list, columns = ['peptide'])
+    print(seq_df)
+    seqX = seq_df.peptide.apply(lambda x: pd.Series(blosum_encode(x)),1)
     #predict
-    scores = reg.predict(X).tolist()
+    if state == True:
+        scores = reg.predict(seqX).tolist()
+    else:
+        scores = reg.predict(X).tolist()
     # print(scores)
     max_score = max(scores)
     max_score_index = scores.index(max_score)
@@ -169,14 +178,15 @@ def AllmerPrepredict(allele, seq, blosum_encode, reg):
     
     return trueX
 
-###--- Test ---###
+# ##--- Test ---###
 # reg = MLPRegressor(hidden_layer_sizes=(5), alpha=0.01, max_iter=500,
 #                         activation='relu', solver='lbfgs', random_state=2)
 # randomPep = PF.randomPeptideGenerator(11, 9, 1)
+# allele = "HLA-A*01:01"
 # iniY = [0.1]
-# iniX, seq_list = AllmerEncoder("HLA-A*01:01", randomPep[0], blosum_encode)
+# iniX, seq_list = AllmerEncoder(allele, randomPep[0], blosum_encode)
 # reg.fit(iniX, iniY)
-# AllmerPrepredict("HLA-A*01:01", "ASFCGSPY", blosum_encode, reg)
+# AllmerPrepredict(allele, "ASFCGSPY", blosum_encode, reg, False)
 
 def RandomStartPredictor(dataset, allele, blosum_encode, hidden_node):
     '''Prediction of specific allele with initial random-set predictor, 
@@ -194,6 +204,8 @@ def RandomStartPredictor(dataset, allele, blosum_encode, hidden_node):
     -------
     reg: regression predictor
         The trained predictor
+    auc_df: DataFrame
+        The auc value of all prediction circles
     '''
     if len(dataset)<200:
         return
@@ -208,46 +220,45 @@ def RandomStartPredictor(dataset, allele, blosum_encode, hidden_node):
     reg.fit(iniX, iniY)
 
     ##encode the peptide
-    X = dataset.peptide.apply(lambda x: pd.Series(AllmerPrepredict(allele, x, blosum_encode, reg)),1)
+    X = dataset.peptide.apply(lambda x: pd.Series(AllmerPrepredict(allele, x, blosum_encode, reg, False)),1)
     y = dataset.log50k
 
     ##cross_validation not done
+    PreCirNum = 6
     ferror = os.path.join(current_path, "randomStart_neg_mean_squared_error.csv")
     fauc = os.path.join(current_path, "randomStart_roc_auc.csv")
-    fr2 = os.path.join(current_path, "existStart_r2.csv")
+    fr2 = os.path.join(current_path, "randomStart_r2.csv")
     square_error_list = []
     auc_list = []
     r2_list = []
-    for i in range(6):
-        cv_results = cross_validate(reg, X, y, cv=5, scoring = ('roc_auc', 'neg_mean_squared_error', 'r2'), return_estimator=True)
+    for i in range(PreCirNum):
+        cv_results = cross_validate(reg, X, y, cv=5, scoring = ('neg_mean_squared_error', 'r2'), return_estimator=True)
         square_error_list.append(cv_results['test_neg_mean_squared_error'])
-        auc_list.append(cv_results['test_roc_auc'])
+        # auc_list.append(cv_results['test_roc_auc'])
         r2_list.append(cv_results['test_r2'])
         reg = cv_results['estimator']
         print(cv_results.keys())
-    auc_df = pd.DataFrame(auc_list, columns = ['1-fold', '2-fold', '3-fold', '4-fold', '5-fold'])
-    square_error_df = pd.DataFrame(square_error_list, columns = ['1-fold', '2-fold', '3-fold', '4-fold', '5-fold'])
-    r2_df = pd.DataFrame(r2_list, columns = ['1-fold', '2-fold', '3-fold', '4-fold', '5-fold'])
-    
-    auc_df.to_csv(fauc)
+    # auc_df = pd.DataFrame(auc_list, columns = [str(i)+"-fold" for i in range(1, PreCirNum+1)])
+    square_error_df = pd.DataFrame(square_error_list, columns = [str(i)+"-fold" for i in range(1, PreCirNum+1)])
+    r2_df = pd.DataFrame(r2_list, columns = [str(i)+"-fold" for i in range(1, PreCirNum+1)])
+
+    # auc_df.to_csv(fauc)
     square_error_df.to_csv(ferror)
     r2_df.to_csv(fr2)
     
-    # reg.fit(X , y)
+    return reg, r2_df#, auc_df
 
-    return reg
+# allele = "Patr-A*0101"
+# data_path = os.path.join(data_path, "modified_mhc.20130222.csv")
+# dataset = pd.read_csv(data_path)
+# shuffled_dataset = shuffle(dataset, random_state=0)
+# allele_dataset = shuffled_dataset.loc[shuffled_dataset['allele'] == allele]
+# # print(allele_dataset)
+# # print(dataset)
+# hidden_node = 5
+# RandomStartPredictor(dataset, allele, blosum_encode, hidden_node)
 
-allele = "Patr-A*0101"
-data_path = os.path.join(data_path, "modified_mhc.20130222.csv")
-dataset = pd.read_csv(data_path)
-shuffled_dataset = shuffle(dataset, random_state=0)
-allele_dataset = shuffled_dataset.loc[shuffled_dataset['allele'] == allele]
-# print(allele_dataset)
-# print(dataset)
-hidden_node = 5
-RandomStartPredictor(dataset, allele, blosum_encode, hidden_node)
-
-def ExistStartPredictor(dataset, allele, blosum_encode):
+def ExistStartPredictor(dataset, allele, blosum_encode, hidden_node):
     '''Prediction of specific allele with initial exist-set predictor, 
         perform cross validation
     dataset: Dataframe
@@ -263,47 +274,57 @@ def ExistStartPredictor(dataset, allele, blosum_encode):
     -------
     reg: regression predictor
         The trained predictor
+    auc_df: DataFrame
+        The auc value of the all prediction circles
     '''
     if len(dataset)<200:
         return
     
     ##find the corresponding predictor
-    reg = PF.find_model(allele, 9)
+    aw = re.sub('[*:]','_',allele)
+    reg = PF.find_model(aw, 9)
     if reg is None:
         print ('Locals do not have model for this allele.')
         return 
 
     ##encode the peptide
-    X = dataset.peptide.apply(lambda x: pd.Series(AllmerPrepredict(allele, x, blosum_encode, reg)),1)
+    X = dataset.peptide.apply(lambda x: pd.Series(AllmerPrepredict(allele, x, blosum_encode, reg, True)),1)
     y = dataset.log50k
 
     ##cross_validation
-    #not done
-    ##cross_validation not done
+    PreCirNum = 3
     ferror = os.path.join(current_path, "existStart_neg_mean_squared_error.csv")
     fauc = os.path.join(current_path, "existStart_roc_auc.csv")
     fr2 = os.path.join(current_path, "existStart_r2.csv")
     square_error_list = []
     auc_list = []
     r2_list = []
-    for i in range(3):
-        cv_results = cross_validate(reg, X, y, cv=5, scoring = ('roc_auc', 'neg_mean_squared_error', 'r2'), return_estimator=True)
+    for i in range(PreCirNum):
+        cv_results = cross_validate(reg, X, y, cv=5, scoring = ('neg_mean_squared_error', 'r2'), return_estimator=True)
         square_error_list.append(cv_results['test_neg_mean_squared_error'])
-        auc_list.append(cv_results['test_roc_auc'])
+        # auc_list.append(cv_results['test_roc_auc'])
         r2_list.append(cv_results['test_r2'])
         reg = cv_results['estimator']
         print(cv_results.keys())
-    auc_df = pd.DataFrame(auc_list, columns = ['1-fold', '2-fold', '3-fold', '4-fold', '5-fold'])
-    square_error_df = pd.DataFrame(square_error_list, columns = ['1-fold', '2-fold', '3-fold', '4-fold', '5-fold'])
-    r2_df = pd.DataFrame(r2_list, columns = ['1-fold', '2-fold', '3-fold', '4-fold', '5-fold'])
+    # auc_df = pd.DataFrame(auc_list, columns = [str(i)+"-fold" for i in range(1, PreCirNum+1)])
+    square_error_df = pd.DataFrame(square_error_list, columns = [str(i)+"-fold" for i in range(1, PreCirNum+1)])
+    r2_df = pd.DataFrame(r2_list, columns = [str(i)+"-fold" for i in range(1, PreCirNum+1)])
 
-    auc_df.to_csv(fauc)
+    # auc_df.to_csv(fauc)
     square_error_df.to_csv(ferror)
     r2_df.to_csv(fr2)
-    
-    # reg.fit(X , y)
 
-    return reg
+    return reg, r2_df#, auc_df
+
+# allele = "H-2-Kd"
+# data_path = os.path.join(data_path, "modified_mhc.20130222.csv")
+# dataset = pd.read_csv(data_path)
+# shuffled_dataset = shuffle(dataset, random_state=0)
+# allele_dataset = shuffled_dataset.loc[shuffled_dataset['allele'] == allele]
+# # print(allele_dataset)
+# # print(dataset)
+# hidden_node = 5
+# ExistStartPredictor(dataset, allele, blosum_encode, hidden_node)
 
 def allmerPredictor(dataset, allele, blosum_encode, hidden_node, ifRandomStart):
     '''Choose prediction strategy according to ifRandomStart and perform cross validation
@@ -322,13 +343,13 @@ def allmerPredictor(dataset, allele, blosum_encode, hidden_node, ifRandomStart):
         Whether it is random start or exist start
     '''
     if ifRandomStart:
-        reg = RandomStartPredictor(dataset, allele, blosum_encode, hidden_node)
+        reg, auc_df = RandomStartPredictor(dataset, allele, blosum_encode, hidden_node)
         startType = "RandomStart"
     else:
-        reg = ExistStartPredictor(dataset, allele, blosum_encode, hidden_node)
+        reg, auc_df = ExistStartPredictor(dataset, allele, blosum_encode, hidden_node)
         startType = "ExistStart"
 
-    return reg, startType
+    return reg, auc_df, startType
 
 
 def BuildPredictor(dataset, hidden_node, ifRandomStart):
@@ -353,15 +374,17 @@ def BuildPredictor(dataset, hidden_node, ifRandomStart):
     alleles = shuffled_dataset.allele.unique().tolist()
 
     path = os.path.join(model_path, "allmer")
+    alleles_auc = []
     for allele in alleles:
         ##cross validation, determing the training and testing data
         #Here I need to get the score
-        reg, startType = allmerPredictor(dataset, allele, blosum_encode, hidden_node, ifRandomStart)
-        # aw = re.sub('[*:]','_',allele)
-        # fname = os.path.join(os.path.join(path, startType), aw +'.joblib')
-        # if reg is not None:
-        #     joblib.dump(reg, fname, protocol=2)
-        #     print("%s fitting of allele %s is done" %(startType, allele))
+        reg, auc_df, startType = allmerPredictor(dataset, allele, blosum_encode, hidden_node, ifRandomStart)
+        alleles_auc.append(auc_df)
+        aw = re.sub('[*:]','_',allele)
+        fname = os.path.join(os.path.join(path, startType), aw +'.joblib')
+        if reg is not None:
+            joblib.dump(reg, fname, protocol=2)
+            print("%s fitting of allele %s is done" %(startType, allele))
     
 
 # data_path = os.path.join(data_path, "mhci.20130222.csv")
