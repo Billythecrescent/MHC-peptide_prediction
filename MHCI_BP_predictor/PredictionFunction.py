@@ -13,6 +13,7 @@ import numpy as np
 import joblib
 from sklearn import metrics
 import epitopepredict as ep
+import NullSeq_Functions as NS
 
 module_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__))) #code\MHC-peptide_prediction
 current_path = os.path.dirname(os.path.abspath(__file__)) #code\MHC-peptide_prediction\MHCI_BP_predictor
@@ -62,6 +63,73 @@ def blosum_encode(seq):
     e = x.to_numpy().flatten() 
     # print(x)   
     return e
+
+def DecToBinEncode(dec, lowerBound, UpperBound):
+    '''Decimal to binary and encode it to len-3 list
+    dec: int
+        decimal integar, in the range of [lowerBound, UpperBound]
+    lowerBound: int
+        the lower bound of the permitted decimal
+    UpperBound: int
+        the upper bound of the permitted decimal
+
+    Return:
+    ------
+    binCode: int[]
+        list of 0 and 1
+    '''
+    if dec < lowerBound or dec > UpperBound:
+        print("decimal out of bound")
+        return
+    else:
+        biList = list(bin(dec)[2:])
+        for i in range(len(biList)):
+            biList[i] = int(biList[i])
+        if len(biList) < 3:
+            biList = [0]*(3-len(biList)) + biList
+    return biList
+
+def randomPeptideGenerator(TranscribeTableNum, l, seqNum):
+    '''Generate random amino acid sequences given a codon table
+    TranscribeTableNum: int
+        the codon table index according to NCBI
+        default: 11
+    l: int
+        the length of the amino acid sequnce
+    seqNum: int
+        the number of generated random sequences
+    
+    Returns
+    -------
+    AASequences: string[]
+        random amino acid sequence list
+    '''
+    
+    AAfile = os.path.join(current_path, "AAUsage.csv")
+    N = TranscribeTableNum
+    if AAfile is not None:
+        if AAfile.split('.')[-1] == 'csv':
+            AAUsage = NS.df_to_dict(NS.AAUsage_from_csv(AAfile), N)
+            length = l
+            AASequence = None
+            operatingmode = 'AA Usage Frequency'
+        else:
+            AASequence = NS.parse_fastafile(AAfile)
+            AAUsage = NS.get_AA_Freq(AASequence, N, nucleotide=False)
+            operatingmode = 'Existing Sequence - AA'
+            if l == None:
+                length = len(AASequence)-1
+            else:
+                length = l
+            if ES:
+                pass
+            else:
+                AASequence = None
+    AASequences = []
+    for i in range(seqNum):
+        AASequences.append(NS.get_Random_AA_Seq(AAUsage, length))
+    # print(AASequences)
+    return AASequences
 
 def geo_mean(iterable):
     nplist = np.array(iterable)
