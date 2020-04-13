@@ -10,10 +10,12 @@ Description: This script is the update version of Non9mer_Predictor, as in
 import os, re
 import pandas as pd
 import numpy as np
+from time import time
 # from scipy.stats import pearsonr
 from sklearn.utils import shuffle
 from sklearn.neural_network import MLPRegressor
 from sklearn.model_selection import cross_validate
+from sklearn.model_selection import KFold
 from sklearn.preprocessing import *
 import joblib
 import epitopepredict as ep
@@ -168,11 +170,8 @@ def AllmerPrepredict(allele, seq, blosum_encode, reg, state):
         the only true encoding of the sequence
     '''
     X, seq_list = AllmerEncoder(allele, seq, blosum_encode)
-    seq_df = pd.DataFrame(seq_list, columns = ['peptide'])
 
-    seqX = seq_df.peptide.apply(lambda x: pd.Series(blosum_encode(x)),1)
-    scaler = MaxAbsScaler()
-    seqX = pd.DataFrame(scaler.fit_transform(seqX), columns = [i for i in range(216)])
+    seqX = pd.DataFrame(np.split(X, [216], axis=1)[0], columns = [i for i in range(216)])
     #predict
     if state == True:
         scores = reg.predict(seqX).tolist()
@@ -186,7 +185,7 @@ def AllmerPrepredict(allele, seq, blosum_encode, reg, state):
     
     trueX = X.iloc[max_score_index].to_numpy()
     # print(trueX, trueX.shape)
-    
+    # print(seq+"_"+"done", len(seq))
     return trueX
 
 # ##--- Test ---###
@@ -218,8 +217,8 @@ def RandomStartPredictor(dataset, allele, blosum_encode, hidden_node):
     auc_df: DataFrame
         The auc value of all prediction circles
     '''
-    if len(dataset)<200:
-        return
+    # if len(dataset)<200:
+    #     return
     
     ##initialize the predictor
     reg = MLPRegressor(hidden_layer_sizes=(hidden_node), alpha=0.01, max_iter=500,
@@ -230,44 +229,55 @@ def RandomStartPredictor(dataset, allele, blosum_encode, hidden_node):
     iniY = [0.1]
     reg.fit(iniX, iniY)
 
-    ##encode the peptide
-    X = dataset.peptide.apply(lambda x: pd.Series(AllmerPrepredict(allele, x, blosum_encode, reg, False)),1)
-    y = dataset.log50k
+    y = dataset.log50k.to_numpy()
+
+    #X is encoded below
 
     ##cross_validation not done
-    PreCirNum = 6
-    ferror = os.path.join(current_path, "randomStart_neg_mean_squared_error.csv")
+    PreCirNum = 20
     fauc = os.path.join(current_path, "randomStart_roc_auc.csv")
-    fr2 = os.path.join(current_path, "randomStart_r2.csv")
-    square_error_list = []
-    auc_list = []
-    r2_list = []
+    avg_auc_list = []
     for i in range(PreCirNum):
-        cv_results = cross_validate(reg, X, y, cv=5, scoring = ('neg_mean_squared_error', 'r2'), return_estimator=True)
-        square_error_list.append(cv_results['test_neg_mean_squared_error'])
-        # auc_list.append(cv_results['test_roc_auc'])
-        r2_list.append(cv_results['test_r2'])
-        reg = cv_results['estimator']
-        print(cv_results.keys())
-    # auc_df = pd.DataFrame(auc_list, columns = [str(i)+"-fold" for i in range(1, PreCirNum+1)])
-    square_error_df = pd.DataFrame(square_error_list, columns = [str(i)+"-fold" for i in range(1, PreCirNum+1)])
-    r2_df = pd.DataFrame(r2_list, columns = [str(i)+"-fold" for i in range(1, PreCirNum+1)])
+        print("allele %s round %d starts" % (allele, i))
+        auc_list = []
+        ##encode the peptide
+        X = dataset.peptide.apply(lambda x: pd.Series(AllmerPrepredict(allele, x, blosum_encode, reg, False)),1).to_numpy()
+        # print(X)
+        kf = KFold(n_splits=5, shuffle=True)
+        for k, (train, test) in enumerate(kf.split(X, y)):
+            print("allele %s round %d fold %d starts" %(allele, i, k))
+            reg.fit(X[train], y[train])
+            scores = reg.predict(X[test])
+            auc = PF.auc_score(y[test], scores, cutoff=.426)
+            auc_list.append(auc)
+        print("allele %s round %d aucs: %s" %(allele, i, str(auc_list)))
+        avg_auc = np.mean(auc_list)
+        avg_auc_list.append(avg_auc)
 
-    # auc_df.to_csv(fauc)
-    square_error_df.to_csv(ferror)
-    r2_df.to_csv(fr2)
+
+        # cv_results = cross_validate(reg, X, y, cv=5, scoring = ('neg_mean_squared_error', 'r2'), return_estimator=True)
+        # square_error_list.append(cv_results['test_neg_mean_squared_error'])
+        # # auc_list.append(cv_results['test_roc_auc'])
+        # r2_list.append(cv_results['test_r2'])
+        # reg = cv_results['estimator']
+        # print(cv_results.keys())
     
-    return reg, r2_df#, auc_df
+    auc_df = pd.DataFrame(np.array(avg_auc_list).reshape(1, -1), columns = [str(i)+"-round" for i in range(1, PreCirNum+1)])
+    print(auc_df)
 
-allele = "Patr-A*0101"
-data_path = os.path.join(data_path, "modified_mhc.20130222.csv")
-dataset = pd.read_csv(data_path)
-shuffled_dataset = shuffle(dataset, random_state=0)
-allele_dataset = shuffled_dataset.loc[shuffled_dataset['allele'] == allele]
-# print(allele_dataset)
-# print(dataset)
-hidden_node = 5
-RandomStartPredictor(dataset, allele, blosum_encode, hidden_node)
+    auc_df.to_csv(fauc)
+    
+    return reg, auc_df
+
+# # allele = "Patr-A*0101"
+# allele = "H-2-Kd"
+# data_path = os.path.join(data_path, "modified_mhc.20130222.csv")
+# dataset = pd.read_csv(data_path)
+# # shuffled_dataset = shuffle(dataset, random_state=0)
+# allele_dataset = dataset.loc[dataset['allele'] == allele]
+# # print(allele_dataset)
+# hidden_node = 5
+# RandomStartPredictor(allele_dataset, allele, blosum_encode, hidden_node)
 
 def ExistStartPredictor(dataset, allele, blosum_encode, hidden_node):
     '''Prediction of specific allele with initial exist-set predictor, 
@@ -363,7 +373,7 @@ def allmerPredictor(dataset, allele, blosum_encode, hidden_node, ifRandomStart):
     return reg, auc_df, startType
 
 
-def BuildPredictor(dataset, hidden_node, ifRandomStart):
+def BuildPredictor(dataset, hidden_node, ifRandomStart, auc_filename):
     '''Build predictor according to whether it is random start or exist start
         random start uses initialized regression predictor to iterate fitting
         exist start uses existed model to prepredict the binding core of the 
@@ -374,30 +384,41 @@ def BuildPredictor(dataset, hidden_node, ifRandomStart):
         the number of hidden layer nodes
     ifRandomStart: Boolean
         Whether it is random start or exist start
+    auc_filename: string 
+        the name of the output auc file
     
     Return:
     ------
     None
     '''
     #shuffle dataset
-    shuffled_dataset = shuffle(dataset, random_state=0)
+    # shuffled_dataset = shuffle(dataset, random_state=0)
     # print(shuffled_dataset)
-    alleles = shuffled_dataset.allele.unique().tolist()
+    alleles = dataset.allele.unique().tolist()
 
     path = os.path.join(model_path, "allmer")
     alleles_auc = []
     for allele in alleles:
         ##cross validation, determing the training and testing data
         #Here I need to get the score
-        reg, auc_df, startType = allmerPredictor(dataset, allele, blosum_encode, hidden_node, ifRandomStart)
+        allele_dataset = dataset.loc[dataset['allele'] == allele]
+        reg, auc_df, startType = allmerPredictor(allele_dataset, allele, blosum_encode, hidden_node, ifRandomStart)
         alleles_auc.append(auc_df)
-        aw = re.sub('[*:]','_',allele)
-        fname = os.path.join(os.path.join(path, startType), aw +'.joblib')
-        if reg is not None:
-            joblib.dump(reg, fname, protocol=2)
-            print("%s fitting of allele %s is done" %(startType, allele))
+        # aw = re.sub('[*:]','_',allele)
+        # fname = os.path.join(os.path.join(path, startType), aw +'.joblib')
+        # if reg is not None:
+        #     joblib.dump(reg, fname, protocol=2)
+        #     print("%s fitting of allele %s is done" %(startType, allele))
+    alleles_auc_df = pd.DataFrame(np.array(alleles_auc).reshape(1,-1), index=alleles)
+    alleles_auc_df.to_csv(os.path.join(current_path, auc_filename))
     
+t0 = time()
 
-# data_path = os.path.join(data_path, "mhci.20130222.csv")
-# dataset = pd.read_csv(data_path)
-# BuildPredictor(dataset)
+data_path = os.path.join(data_path, "modified_mhc.20130222.csv")
+dataset = pd.read_csv(data_path)
+hidden_node = 5
+BuildPredictor(dataset, hidden_node, True, "AllmerPredictionResult.csv")
+
+t1 = time()
+
+print ("Elapsed time (m):", (t1-t0)/60)
