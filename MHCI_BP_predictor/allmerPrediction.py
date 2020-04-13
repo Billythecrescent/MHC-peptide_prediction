@@ -252,7 +252,7 @@ def RandomStartPredictor(dataset, allele, blosum_encode, hidden_node):
             reg.fit(X[train], y[train])
             scores = reg.predict(X[test])
             auc = PF.auc_score(y[test], scores, cutoff=.426)
-            r = PF.r_score(y[test], scores)
+            r = PF.pearson_score(y[test], scores)
             auc_list.append(auc)
             r_list.append(r)
         print("allele %s round %d aucs: %s" %(allele, i, str(auc_list)))
@@ -267,20 +267,20 @@ def RandomStartPredictor(dataset, allele, blosum_encode, hidden_node):
     print(auc_df)
     print(r_df)
 
-    auc_df.to_csv(fauc)
-    r_df.to_csv(fr)
+    # auc_df.to_csv(fauc)
+    # r_df.to_csv(fr)
     
-    return reg, auc_df
+    return reg, auc_df, r_df
 
-allele = "Patr-A*0101"
-# allele = "H-2-Kd"
-data_path = os.path.join(data_path, "modified_mhc.20130222.csv")
-dataset = pd.read_csv(data_path)
-# shuffled_dataset = shuffle(dataset, random_state=0)
-allele_dataset = dataset.loc[dataset['allele'] == allele]
-# print(allele_dataset)
-hidden_node = 5
-RandomStartPredictor(allele_dataset, allele, blosum_encode, hidden_node)
+# allele = "Patr-A*0101"
+# # allele = "H-2-Kd"
+# data_path = os.path.join(data_path, "modified_mhc.20130222.csv")
+# dataset = pd.read_csv(data_path)
+# # shuffled_dataset = shuffle(dataset, random_state=0)
+# allele_dataset = dataset.loc[dataset['allele'] == allele]
+# # print(allele_dataset)
+# hidden_node = 5
+# RandomStartPredictor(allele_dataset, allele, blosum_encode, hidden_node)
 
 def ExistStartPredictor(dataset, allele, blosum_encode, hidden_node):
     '''Prediction of specific allele with initial exist-set predictor, 
@@ -342,7 +342,7 @@ def ExistStartPredictor(dataset, allele, blosum_encode, hidden_node):
             scores = reg.predict(X[test])
             auc = PF.auc_score(y[test], scores, cutoff=.426)
             auc_list.append(auc)
-            r = PF.r_score(y[test], scores)
+            r = PF.pearson_score(y[test], scores)
             r_list.append(r)
         print("allele %s round %d aucs: %s" %(allele, i, str(auc_list)))
         print("allele %s round %d rs: %s" %(allele, i, str(r_list)))
@@ -359,7 +359,7 @@ def ExistStartPredictor(dataset, allele, blosum_encode, hidden_node):
     # auc_df.to_csv(fauc)
     # r_df.to_csv(fr)
     
-    return reg, auc_df
+    return reg, auc_df, r_df
 
 # allele = "H-2-Kb"
 # data_path = os.path.join(data_path, "modified_mhc.20130222.csv")
@@ -387,16 +387,16 @@ def allmerPredictor(dataset, allele, blosum_encode, hidden_node, ifRandomStart):
         Whether it is random start or exist start
     '''
     if ifRandomStart:
-        reg, auc_df = RandomStartPredictor(dataset, allele, blosum_encode, hidden_node)
+        reg, auc_df, r_df = RandomStartPredictor(dataset, allele, blosum_encode, hidden_node)
         startType = "RandomStart"
     else:
-        reg, auc_df = ExistStartPredictor(dataset, allele, blosum_encode, hidden_node)
+        reg, auc_df, r_df = ExistStartPredictor(dataset, allele, blosum_encode, hidden_node)
         startType = "ExistStart"
 
-    return reg, auc_df, startType
+    return reg, auc_df, r_df, startType
 
 
-def BuildPredictor(dataset, hidden_node, ifRandomStart, auc_filename):
+def BuildPredictor(dataset, hidden_node, ifRandomStart, score_filename):
     '''Build predictor according to whether it is random start or exist start
         random start uses initialized regression predictor to iterate fitting
         exist start uses existed model to prepredict the binding core of the 
@@ -407,8 +407,8 @@ def BuildPredictor(dataset, hidden_node, ifRandomStart, auc_filename):
         the number of hidden layer nodes
     ifRandomStart: Boolean
         Whether it is random start or exist start
-    auc_filename: string 
-        the name of the output auc file
+    score_filename: string 
+        the name of the output auc file (auc, PCC)
     
     Return:
     ------
@@ -421,27 +421,31 @@ def BuildPredictor(dataset, hidden_node, ifRandomStart, auc_filename):
 
     path = os.path.join(model_path, "allmer")
     alleles_auc = []
+    alleles_PCC = []
     for allele in alleles:
         ##cross validation, determing the training and testing data
         #Here I need to get the score
         allele_dataset = dataset.loc[dataset['allele'] == allele]
-        reg, auc_df, startType = allmerPredictor(allele_dataset, allele, blosum_encode, hidden_node, ifRandomStart)
+        reg, auc_df, r_df, startType = allmerPredictor(allele_dataset, allele, blosum_encode, hidden_node, ifRandomStart)
         alleles_auc.append(auc_df)
+        alleles_PCC.append(r_df)
         # aw = re.sub('[*:]','_',allele)
         # fname = os.path.join(os.path.join(path, startType), aw +'.joblib')
         # if reg is not None:
         #     joblib.dump(reg, fname, protocol=2)
         #     print("%s fitting of allele %s is done" %(startType, allele))
     alleles_auc_df = pd.DataFrame(np.array(alleles_auc).reshape(1,-1), index=alleles)
-    alleles_auc_df.to_csv(os.path.join(current_path, auc_filename))
+    alleles_auc_df.to_csv(os.path.join(current_path, score_filename + "_auc.csv"))
+    alleles_PCC_df = pd.DataFrame(np.array(alleles_PCC).reshape(1,-1), index=alleles)
+    alleles_PCC_df.to_csv(os.path.join(current_path, score_filename + "_PCC.csv"))
     
-# t0 = time()
+t0 = time()
 
-# data_path = os.path.join(data_path, "modified_mhc.20130222.csv")
-# dataset = pd.read_csv(data_path)
-# hidden_node = 5
-# BuildPredictor(dataset, hidden_node, True, "AllmerPredictionResult.csv")
+data_path = os.path.join(data_path, "modified_mhc.20130222.csv")
+dataset = pd.read_csv(data_path)
+hidden_node = 5
+BuildPredictor(dataset, hidden_node, True, "AllmerPredictionResult")
 
-# t1 = time()
+t1 = time()
 
-# print ("Elapsed time (m):", (t1-t0)/60)
+print ("Elapsed time (m):", (t1-t0)/60)
