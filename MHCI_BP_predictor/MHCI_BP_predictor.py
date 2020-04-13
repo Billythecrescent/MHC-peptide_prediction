@@ -15,6 +15,11 @@ import joblib
 from sklearn.model_selection import train_test_split,cross_val_score,ShuffleSplit
 from sklearn.neural_network import MLPRegressor
 
+module_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__))) #code\MHC-peptide_prediction
+current_path = os.path.dirname(os.path.abspath(__file__)) #code\MHC-peptide_prediction\MHCI_BP_predictor
+model_path = os.path.join(module_path,"models") #code\MHC-peptide_prediction\models
+data_path = os.path.join(module_path,"data") #code\MHC-peptide_prediction\data
+
 codes = ['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L',
          'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'Y']
 
@@ -51,15 +56,15 @@ def auc_score(true,sc,cutoff=None):
 
 def build_predictor(training_data, allele, encoder, hidden_node):
 
-    data = training_data[training_data['allele'] == allele]
-    if len(data)<200:
+    data = training_data.loc[training_data['allele'] == allele]
+    if len(data) < 100:
         return
 
     # #write training dataframe to csv file
     # aw = re.sub('[*:]','_',allele) 
     # data.to_csv(os.path.join('alletes',aw+'_data.csv'))
     
-    reg = MLPRegressor(hidden_layer_sizes=(hidden_node), alpha=0.01, max_iter=500,
+    reg = MLPRegressor(hidden_layer_sizes=(hidden_node), alpha=0.01, max_iter=1000,
                         activation='relu', solver='lbfgs', random_state=2)    
     X = data.peptide.apply(lambda x: pd.Series(encoder(x)),1) #Find bug: encoding result has NaN
     y = data.log50k
@@ -77,18 +82,21 @@ def get_allele_names(data):
     return list(a.index)
 
 def build_prediction_model(training_data, hidden_node):
-    al = get_allele_names(training_data)
-    path = 'models'
+    al = training_data.allele.unique().tolist()
     for a in al:
-        aw = re.sub('[*:]','_',a) 
-        fname = os.path.join(path, aw+'.joblib')
+        aw = re.sub('[*:]','_', a) 
+        fname = os.path.join(model_path, aw+'.joblib')
         reg = build_predictor(training_data, a, blosum_encode, hidden_node)
         if reg is not None:
             joblib.dump(reg, fname, protocol=2)
+            print("predictor for allele %s is done" %a)
 
 def main(hidden_node):
-    training_data = ep.get_training_set(length=9)
+    allmer_mhci = os.path.join(data_path, "modified_mhc.20130222.csv")
+    dataset = pd.read_csv(allmer_mhci)
+    allele_dataset = dataset.loc[dataset['length'] == 9]
+    training_data = allele_dataset
     # print(training_data)
     build_prediction_model(training_data, hidden_node)
 
-# main(20)
+main(20)
