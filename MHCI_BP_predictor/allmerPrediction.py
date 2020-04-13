@@ -14,6 +14,7 @@ import numpy as np
 from sklearn.utils import shuffle
 from sklearn.neural_network import MLPRegressor
 from sklearn.model_selection import cross_validate
+from sklearn.preprocessing import *
 import joblib
 import epitopepredict as ep
 
@@ -134,9 +135,17 @@ def AllmerEncoder(allele, seq, blosum_encode):
     seq_list, feature_list = SlideTo9mer(seq)
     seq_df = pd.DataFrame(seq_list, columns=['peptide'])
     X = seq_df.peptide.apply(lambda x: pd.Series(SeqEncoding(x, feature_list[seq_list.index(x)], blosum_encode)),1)
+    #split X
+    splitX = np.split(X, [216], axis=1)
+    #scale the data to [-1, 1] use Abs
+    scaler = MaxAbsScaler()
+    # print(pd.DataFrame(scaler.fit_transform(splitX[0]), columns = [i for i in range(216)]))
+    X = pd.concat((pd.DataFrame(scaler.fit_transform(splitX[0]), columns = [i for i in range(216)]), splitX[1]), axis=1)
     # print(X)  # 24*9+(4+3+3) = 226
 
     return X, seq_list
+
+# AllmerEncoder("HLA-A*01:01", "ABCDEFGH", blosum_encode)
 
 def AllmerPrepredict(allele, seq, blosum_encode, reg, state):
     '''Preprediction of the peptide, to find out the binding core and encode the peptide
@@ -160,8 +169,10 @@ def AllmerPrepredict(allele, seq, blosum_encode, reg, state):
     '''
     X, seq_list = AllmerEncoder(allele, seq, blosum_encode)
     seq_df = pd.DataFrame(seq_list, columns = ['peptide'])
-    print(seq_df)
+
     seqX = seq_df.peptide.apply(lambda x: pd.Series(blosum_encode(x)),1)
+    scaler = MaxAbsScaler()
+    seqX = pd.DataFrame(scaler.fit_transform(seqX), columns = [i for i in range(216)])
     #predict
     if state == True:
         scores = reg.predict(seqX).tolist()
@@ -248,15 +259,15 @@ def RandomStartPredictor(dataset, allele, blosum_encode, hidden_node):
     
     return reg, r2_df#, auc_df
 
-# allele = "Patr-A*0101"
-# data_path = os.path.join(data_path, "modified_mhc.20130222.csv")
-# dataset = pd.read_csv(data_path)
-# shuffled_dataset = shuffle(dataset, random_state=0)
-# allele_dataset = shuffled_dataset.loc[shuffled_dataset['allele'] == allele]
-# # print(allele_dataset)
-# # print(dataset)
-# hidden_node = 5
-# RandomStartPredictor(dataset, allele, blosum_encode, hidden_node)
+allele = "Patr-A*0101"
+data_path = os.path.join(data_path, "modified_mhc.20130222.csv")
+dataset = pd.read_csv(data_path)
+shuffled_dataset = shuffle(dataset, random_state=0)
+allele_dataset = shuffled_dataset.loc[shuffled_dataset['allele'] == allele]
+# print(allele_dataset)
+# print(dataset)
+hidden_node = 5
+RandomStartPredictor(dataset, allele, blosum_encode, hidden_node)
 
 def ExistStartPredictor(dataset, allele, blosum_encode, hidden_node):
     '''Prediction of specific allele with initial exist-set predictor, 
