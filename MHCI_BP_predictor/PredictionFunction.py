@@ -12,6 +12,7 @@ import pandas as pd
 import numpy as np
 import joblib
 from sklearn import metrics
+from scipy.stats import pearsonr
 import epitopepredict as ep
 import NullSeq_Functions as NS
 
@@ -156,6 +157,13 @@ def auc_score(true,sc,cutoff = None):
     # r = metrics.auc(fpr, tpr)
     
     return  r
+
+def r2_score(true, sc):
+    return metrics.r2_score(true, sc)
+
+def pearson_score(true, sc):
+    r, p = pearsonr(true, sc)
+    return r
 
 def find_model(allele, length):
     '''Find model for alleles of different lengths. 9mer: ../model/  non9mer: ../model/Non9mer/
