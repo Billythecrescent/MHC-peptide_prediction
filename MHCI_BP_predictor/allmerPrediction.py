@@ -221,8 +221,8 @@ def RandomStartPredictor(dataset, allele, blosum_encode, hidden_node):
     #     return
     
     ##initialize the predictor
-    reg = MLPRegressor(hidden_layer_sizes=(hidden_node), alpha=0.01, max_iter=500,
-                        activation='relu', solver='lbfgs', random_state=2)
+    reg = MLPRegressor(hidden_layer_sizes=(hidden_node), alpha=0.01, max_iter=1000,
+                        activation='relu', solver='adam', random_state=2)
     #create random X and Y as the data for regression initialization
     randomPep = PF.randomPeptideGenerator(11, 9, 1)
     iniX, seq_list = AllmerEncoder(allele, randomPep[0], blosum_encode)
@@ -312,8 +312,8 @@ def ExistStartPredictor(dataset, allele, blosum_encode, hidden_node):
         return 
     
     #create new regression
-    reg = MLPRegressor(hidden_layer_sizes=(hidden_node), alpha=0.01, max_iter=500,
-                        activation='relu', solver='lbfgs', random_state=2)
+    reg = MLPRegressor(hidden_layer_sizes=(hidden_node), alpha=0.01, max_iter=1000, early_stopping=True,
+                        activation='relu', solver='adam', random_state=2)
 
     ##encode the peptide
     y = dataset.log50k.to_numpy()

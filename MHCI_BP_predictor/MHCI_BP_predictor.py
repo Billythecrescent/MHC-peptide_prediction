@@ -64,8 +64,8 @@ def build_predictor(training_data, allele, encoder, hidden_node):
     # aw = re.sub('[*:]','_',allele) 
     # data.to_csv(os.path.join('alletes',aw+'_data.csv'))
     
-    reg = MLPRegressor(hidden_layer_sizes=(hidden_node), alpha=0.01, max_iter=1000,
-                        activation='relu', solver='lbfgs', random_state=2)    
+    reg = MLPRegressor(hidden_layer_sizes=(hidden_node), alpha=0.01, max_iter=1000, early_stopping=True,
+                        activation='relu', solver='adam', random_state=2)
     X = data.peptide.apply(lambda x: pd.Series(encoder(x)),1) #Find bug: encoding result has NaN
     y = data.log50k
 
