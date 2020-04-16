@@ -25,6 +25,7 @@ data_path = os.path.join(module_path,"data") #code\MHC-peptide_prediction\data
 codes = ['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L',
          'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'Y']
 
+
 def dataset2fasta(dataset, filePath):
     '''Convert MHC affinity DataFrame to fasta file
     dataset: DataFrame
