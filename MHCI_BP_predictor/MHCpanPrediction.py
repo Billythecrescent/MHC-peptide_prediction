@@ -10,6 +10,7 @@ Description: This script is to predict MHC-I binding peptide based on a pan-spes
 import os, re
 import pandas as pd
 import numpy as np
+from Bio import SeqIO
 from time import time
 # from scipy.stats import pearsonr
 from sklearn.utils import shuffle
@@ -21,18 +22,41 @@ import joblib
 import epitopepredict as ep
 
 import PredictionFunction as PF
+import panPositionCalulator as PC
 
 ##--- File Paths ---##
 module_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__))) #code\MHC-peptide_prediction
 current_path = os.path.dirname(os.path.abspath(__file__)) #code\MHC-peptide_prediction\MHCI_BP_predictor
 model_path = os.path.join(module_path,"models") #code\MHC-peptide_prediction\models
 data_path = os.path.join(module_path,"data") #code\MHC-peptide_prediction\data
+mhc_path = os.path.join(current_path, "MHC_proteins")
 
 blosum_encode = PF.blosum_encode
 
-#pseudo sequence length = 40 
-pseudo_sequence = [5, 7, 9, 24, 45, 59, 62, 63, 66, 67, 69, 70, 73, 74, 76, 77, 80, 81, 84, \
- 95, 97, 99, 114, 116, 118, 123, 124, 143, 146, 147, 150, 152, 155, 156, 158, 159, 163, 167, 170, 171]
 
-# print(len(pseudo_sequence))
+def ProcessMHCfile(species, dataset):
+    alleles = [allele for allele in dataset.allele.unique().tolist() if allele[:(len(species))] == species]
+    Alist = [allele for allele in alleles if allele[(len(species)+1)] == 'A']
+    Blist = [allele for allele in alleles if allele[(len(species)+1)] == 'B']
+    Clist = [allele for allele in alleles if allele[(len(species)+1)] == 'C']
+    Elist = [allele for allele in alleles if allele[(len(species)+1)] == 'E']
+    
+    with open(os.path.join(mhc_path, species+'-A.fasta'), "rU") as handle:
+        for record in SeqIO.parse(handle, "fasta"):
+            #recore['id', 'name', 'discription', 'Seq']
+            # print(record.description)   #HLA:HLA24129 A*80:06 365 bp
+
+            # 使用正则表达式匹配description中的A*80:01:01:01，从而获得序列allele
+            if re.search(r'([A-Z])([0-9]{2})([0-9]{2})', record.description) != None:
+                str_groups = re.search(r'([A-Z])([0-9]{2})([0-9]{2})', record.description).groups()
+                new_allele = "HLA-" + str_groups[0] + "*" + str_groups[1] + ':' + str_groups[2]
+                new_alleles.append(new_allele)
+
+            # 判断该allele是否在list中（注意:01:01:01的冗余）
+
+            # 截留对应allele的唯一序列，并储存该record
+
+
+allmer_data = pd.read_csv(os.path.join(data_path, "modified_mhc.20130222.csv"))
+ProcessMHCfile("HLA", allmer_data)
 

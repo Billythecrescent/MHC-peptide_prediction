@@ -188,15 +188,16 @@ def AllmerPrepredict(allele, seq, blosum_encode, reg, state):
     # print(seq+"_"+"done", len(seq))
     return trueX
 
-# ##--- Test ---###
-# reg = MLPRegressor(hidden_layer_sizes=(5), alpha=0.01, max_iter=500,
-#                         activation='relu', solver='lbfgs', random_state=2)
-# randomPep = PF.randomPeptideGenerator(11, 9, 1)
-# allele = "HLA-A*01:01"
-# iniY = [0.1]
-# iniX, seq_list = AllmerEncoder(allele, randomPep[0], blosum_encode)
-# reg.fit(iniX, iniY)
-# AllmerPrepredict(allele, "ASFCGSPY", blosum_encode, reg, False)
+def test_AllmerPrepredict():
+    ##--- Test ---###
+    reg = MLPRegressor(hidden_layer_sizes=(5), alpha=0.01, max_iter=500,
+                            activation='relu', solver='adam', random_state=2)
+    randomPep = PF.randomPeptideGenerator(11, 9, 1)
+    allele = "HLA-A*01:01"
+    iniY = [0.1]
+    iniX, seq_list = AllmerEncoder(allele, randomPep[0], blosum_encode)
+    reg.fit(iniX, iniY)
+    AllmerPrepredict(allele, "ASFCGSPY", blosum_encode, reg, False)
 
 def RandomStartPredictor(dataset, allele, blosum_encode, hidden_node):
     '''Prediction of specific allele with initial random-set predictor, 
@@ -262,8 +263,8 @@ def RandomStartPredictor(dataset, allele, blosum_encode, hidden_node):
         avg_r = np.mean(r_list)
         avg_r_list.append(avg_r)
     
-    auc_df = pd.DataFrame(np.array(avg_auc_list).reshape(1, -1), columns = [str(i)+"-round" for i in range(1, PreCirNum+1)])
-    r_df = pd.DataFrame(np.array(avg_r_list).reshape(1, -1), columns = [str(i)+"-round" for i in range(1, PreCirNum+1)])
+    auc_df = pd.DataFrame(np.array(avg_auc_list).reshape(1, -1), columns = [str(i)+"-round" for i in range(1, PreCirNum+1)], index=[allele])
+    r_df = pd.DataFrame(np.array(avg_r_list).reshape(1, -1), columns = [str(i)+"-round" for i in range(1, PreCirNum+1)], index=[allele])
     print(auc_df)
     print(r_df)
 
@@ -272,15 +273,16 @@ def RandomStartPredictor(dataset, allele, blosum_encode, hidden_node):
     
     return reg, auc_df, r_df
 
-# allele = "Patr-A*0101"
-# # allele = "H-2-Kd"
-# data_path = os.path.join(data_path, "modified_mhc.20130222.csv")
-# dataset = pd.read_csv(data_path)
-# # shuffled_dataset = shuffle(dataset, random_state=0)
-# allele_dataset = dataset.loc[dataset['allele'] == allele]
-# # print(allele_dataset)
-# hidden_node = 5
-# RandomStartPredictor(allele_dataset, allele, blosum_encode, hidden_node)
+def test_RandomStart():
+    allele = "Patr-A*0101"
+    # allele = "H-2-Kd"
+    data_path = os.path.join(data_path, "modified_mhc.20130222.csv")
+    dataset = pd.read_csv(data_path)
+    # shuffled_dataset = shuffle(dataset, random_state=0)
+    allele_dataset = dataset.loc[dataset['allele'] == allele]
+    # print(allele_dataset)
+    hidden_node = 5
+    RandomStartPredictor(allele_dataset, allele, blosum_encode, hidden_node)
 
 def ExistStartPredictor(dataset, allele, blosum_encode, hidden_node):
     '''Prediction of specific allele with initial exist-set predictor, 
@@ -351,8 +353,8 @@ def ExistStartPredictor(dataset, allele, blosum_encode, hidden_node):
         avg_r = np.mean(r_list)
         avg_r_list.append(avg_r)
 
-    auc_df = pd.DataFrame(np.array(avg_auc_list).reshape(1, -1), columns = [str(i)+"-round" for i in range(1, PreCirNum+1)])
-    r_df = pd.DataFrame(np.array(avg_r_list).reshape(1, -1), columns = [str(i)+"-round" for i in range(1, PreCirNum+1)])
+    auc_df = pd.DataFrame(np.array(avg_auc_list).reshape(1, -1), columns = [str(i)+"-round" for i in range(1, PreCirNum+1)], index=[allele])
+    r_df = pd.DataFrame(np.array(avg_r_list).reshape(1, -1), columns = [str(i)+"-round" for i in range(1, PreCirNum+1)], index=[allele])
     print(auc_df)
     print(r_df)
 
@@ -361,14 +363,15 @@ def ExistStartPredictor(dataset, allele, blosum_encode, hidden_node):
     
     return reg, auc_df, r_df
 
-# allele = "H-2-Kb"
-# data_path = os.path.join(data_path, "modified_mhc.20130222.csv")
-# dataset = pd.read_csv(data_path)
-# allele_dataset = dataset.loc[dataset['allele'] == allele]
-# # print(allele_dataset)
-# # print(dataset)
-# hidden_node = 5
-# ExistStartPredictor(allele_dataset, allele, blosum_encode, hidden_node)
+def test_ExistStart():
+    allele = "H-2-Kb"
+    data_path = os.path.join(data_path, "modified_mhc.20130222.csv")
+    dataset = pd.read_csv(data_path)
+    allele_dataset = dataset.loc[dataset['allele'] == allele]
+    # print(allele_dataset)
+    # print(dataset)
+    hidden_node = 5
+    ExistStartPredictor(allele_dataset, allele, blosum_encode, hidden_node)
 
 def allmerPredictor(dataset, allele, blosum_encode, hidden_node, ifRandomStart):
     '''Choose prediction strategy according to ifRandomStart and perform cross validation
@@ -427,6 +430,8 @@ def BuildPredictor(dataset, hidden_node, ifRandomStart, score_filename):
         #Here I need to get the score
         allele_dataset = dataset.loc[dataset['allele'] == allele]
         reg, auc_df, r_df, startType = allmerPredictor(allele_dataset, allele, blosum_encode, hidden_node, ifRandomStart)
+        auc_df.to_csv(os.path.join(current_path, score_filename + "_auc.csv"), mode='a', header=False)
+        r_df.to_csv(os.path.join(current_path, score_filename + "_PCC.csv"), mode='a', header=False)
         alleles_auc.append(auc_df)
         alleles_PCC.append(r_df)
         # aw = re.sub('[*:]','_',allele)
@@ -434,17 +439,18 @@ def BuildPredictor(dataset, hidden_node, ifRandomStart, score_filename):
         # if reg is not None:
         #     joblib.dump(reg, fname, protocol=2)
         #     print("%s fitting of allele %s is done" %(startType, allele))
-    alleles_auc_df = pd.DataFrame(np.array(alleles_auc).reshape(1,-1), index=alleles)
-    alleles_auc_df.to_csv(os.path.join(current_path, score_filename + "_auc.csv"))
-    alleles_PCC_df = pd.DataFrame(np.array(alleles_PCC).reshape(1,-1), index=alleles)
-    alleles_PCC_df.to_csv(os.path.join(current_path, score_filename + "_PCC.csv"))
-    
+    alleles_auc_df = pd.DataFrame(np.array(alleles_auc).reshape(1,-1))
+    alleles_auc_df.to_csv(os.path.join(current_path, score_filename + "_complete_auc.csv"))
+    alleles_PCC_df = pd.DataFrame(np.array(alleles_PCC).reshape(1,-1))
+    alleles_PCC_df.to_csv(os.path.join(current_path, score_filename + "_complete_PCC.csv"))
+
+
 t0 = time()
 
 data_path = os.path.join(data_path, "modified_mhc.20130222.csv")
 dataset = pd.read_csv(data_path)
 hidden_node = 5
-BuildPredictor(dataset, hidden_node, True, "AllmerPredictionResult")
+BuildPredictor(dataset, hidden_node, False, "AllmerPredictionResult")
 
 t1 = time()
 
