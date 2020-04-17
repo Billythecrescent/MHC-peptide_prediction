@@ -314,7 +314,7 @@ def ExistStartPredictor(dataset, allele, blosum_encode, hidden_node):
         return 
     
     #create new regression
-    reg = MLPRegressor(hidden_layer_sizes=(hidden_node), alpha=0.01, max_iter=1000, early_stopping=True,
+    reg = MLPRegressor(hidden_layer_sizes=(hidden_node), alpha=0.01, max_iter=5000, early_stopping=True,
                         activation='relu', solver='adam', random_state=2)
 
     ##encode the peptide
@@ -348,6 +348,9 @@ def ExistStartPredictor(dataset, allele, blosum_encode, hidden_node):
             r_list.append(r)
         print("allele %s round %d aucs: %s" %(allele, i, str(auc_list)))
         print("allele %s round %d rs: %s" %(allele, i, str(r_list)))
+        ###
+        #可以考虑设置一个下降制动，当score下降超过某个比例的时候，停止训练，返回上一个值作为预测结果
+        ###
         avg_auc = np.mean(auc_list)
         avg_auc_list.append(avg_auc)
         avg_r = np.mean(r_list)
@@ -391,12 +394,10 @@ def allmerPredictor(dataset, allele, blosum_encode, hidden_node, ifRandomStart):
     '''
     if ifRandomStart:
         reg, auc_df, r_df = RandomStartPredictor(dataset, allele, blosum_encode, hidden_node)
-        startType = "RandomStart"
     else:
         reg, auc_df, r_df = ExistStartPredictor(dataset, allele, blosum_encode, hidden_node)
-        startType = "ExistStart"
 
-    return reg, auc_df, r_df, startType
+    return reg, auc_df, r_df
 
 
 def BuildPredictor(dataset, hidden_node, ifRandomStart, score_filename):
@@ -422,6 +423,14 @@ def BuildPredictor(dataset, hidden_node, ifRandomStart, score_filename):
     # print(shuffled_dataset)
     alleles = dataset.allele.unique().tolist()
 
+    StartType = 'RandomStart'
+    if ifRandomStart == False:
+        StartType = 'ExistStart'
+
+    print("Prediction Mode: %s Prediction\nEncode Method: blosum62\nhidden node: %d\noutput filename: %s\n" \
+     %(StartType, hidden_node, score_filename))
+
+
     path = os.path.join(model_path, "allmer")
     alleles_auc = []
     alleles_PCC = []
@@ -429,7 +438,7 @@ def BuildPredictor(dataset, hidden_node, ifRandomStart, score_filename):
         ##cross validation, determing the training and testing data
         #Here I need to get the score
         allele_dataset = dataset.loc[dataset['allele'] == allele]
-        reg, auc_df, r_df, startType = allmerPredictor(allele_dataset, allele, blosum_encode, hidden_node, ifRandomStart)
+        reg, auc_df, r_df= allmerPredictor(allele_dataset, allele, blosum_encode, hidden_node, ifRandomStart)
         auc_df.to_csv(os.path.join(current_path, score_filename + "_auc.csv"), mode='a', header=False)
         r_df.to_csv(os.path.join(current_path, score_filename + "_PCC.csv"), mode='a', header=False)
         alleles_auc.append(auc_df)
@@ -444,14 +453,14 @@ def BuildPredictor(dataset, hidden_node, ifRandomStart, score_filename):
     alleles_PCC_df = pd.DataFrame(np.array(alleles_PCC).reshape(1,-1))
     alleles_PCC_df.to_csv(os.path.join(current_path, score_filename + "_complete_PCC.csv"))
 
+def main():
+    t0 = time()
 
-t0 = time()
+    data_path = os.path.join(data_path, "modified_mhc.20130222.csv")
+    dataset = pd.read_csv(data_path)
+    hidden_node = 5
+    BuildPredictor(dataset, hidden_node, False, "AllmerPredictionResult")
 
-data_path = os.path.join(data_path, "modified_mhc.20130222.csv")
-dataset = pd.read_csv(data_path)
-hidden_node = 5
-BuildPredictor(dataset, hidden_node, False, "AllmerPredictionResult")
-
-t1 = time()
+    t1 = time()
 
 print ("Elapsed time (m):", (t1-t0)/60)

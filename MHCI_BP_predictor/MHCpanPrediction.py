@@ -167,8 +167,14 @@ def pseudoSeqGenerator(MHCseq, pseudoPosition):
 
 def test_pseudoSeqGenerator():
     pseudoPosition = PC.HLA_pseudo_sequence
-    MHCseq = loadMHCSeq()['HLA-A*01:01']
-    pseudoSeqGenerator(MHCseq, pseudoPosition)
+    MHCseq = loadMHCSeq()
+    dataset = pd.read_csv(os.path.join(data_path, "modified_mhc.20130222.csv"))
+    alleles = dataset.allele.unique().tolist()
+    for allele in alleles:
+        allele_seq = pseudoSeqGenerator(MHCseq[allele], pseudoPosition)
+        print(allele_seq)
+
+# test_pseudoSeqGenerator()
 
 def SlideTo9mer(seq):
     '''Transform allmer sequence to potential 9mer binding core
@@ -231,7 +237,7 @@ def SlideTo9mer(seq):
 
 # SlideTo9mer("ABCDEFGH")
 
-def SeqEncoding(seq, feature, blosum_encode):
+def SeqEncoding(pseudoSeq, seq, feature, blosum_encode):
     '''encode the sequence by blosum_encode and combine it with the feature
         of peptide length, insertion/deletion length&position
     seq_list: string
@@ -247,14 +253,21 @@ def SeqEncoding(seq, feature, blosum_encode):
         the encoded sequence with its features
     '''
     encoded_peptide = blosum_encode(seq)
-    encoded = np.hstack((encoded_peptide, np.array(feature)))
+    encoded = np.hstack((encoded_peptide, np.array(feature))) #(226,)
+    pseudoX = blosum_encode(pseudoSeq)
+    encoded = np.concatenate((encoded, pseudoX))
 
-    return encoded
+    return encoded  # shape = (1186,)
 
-# seq_list, feature_list = SlideTo9mer("ABCDEFGH")
-# print(SeqEncoding(seq_list[0], feature_list[0], blosum_encode))
+def test_SeqEncoding():
+    seq_list, feature_list = SlideTo9mer("ABCDEFGH")
+    MHCSeqDic = loadMHCSeq()
+    initialMHC = MHCSeqDic['HLA-A*01:01']
+    pseudoPosition = PC.HLA_pseudo_sequence
+    pseudoSeq = pseudoSeqGenerator(initialMHC, pseudoPosition)
+    print(SeqEncoding(pseudoSeq, seq_list[0], feature_list[0], blosum_encode))
 
-def AllmerEncoder(seq, blosum_encode):
+def AllmerPanEncoder(pseudoSeq, seq, blosum_encode):
     '''Encode the peptide of allmer, with the encoding of peptide length, 
         deletion/insertion length, and deletion/insertion position
     allele: string 
@@ -274,7 +287,7 @@ def AllmerEncoder(seq, blosum_encode):
 
     seq_list, feature_list = SlideTo9mer(seq)
     seq_df = pd.DataFrame(seq_list, columns=['peptide'])
-    X = seq_df.peptide.apply(lambda x: pd.Series(SeqEncoding(x, feature_list[seq_list.index(x)], blosum_encode)),1)
+    X = seq_df.peptide.apply(lambda x: pd.Series(SeqEncoding(pseudoSeq, x, feature_list[seq_list.index(x)], blosum_encode)),1)
     """ ####--- Scale the matrix ---####
     splitX = np.split(X, [216], axis=1)
     #scale the data to [-1, 1] use Abs
@@ -283,11 +296,16 @@ def AllmerEncoder(seq, blosum_encode):
     X = pd.concat((pd.DataFrame(scaler.fit_transform(splitX[0]), columns = [i for i in range(216)]), splitX[1]), axis=1) """
     # print(X)  # 24*9+(4+3+3) = 226
 
-    return X, seq_list
+    return X, seq_list  # the shape of X is (9, 1186)
 
-# AllmerEncoder("HLA-A*01:01", "ABCDEFGH", blosum_encode)
+def test_AllmerPanEncoder():
+    MHCSeqDic = loadMHCSeq()
+    initialMHC = MHCSeqDic['HLA-A*01:01']
+    pseudoPosition = PC.HLA_pseudo_sequence
+    pseudoSeq = pseudoSeqGenerator(initialMHC, pseudoPosition)
+    print(AllmerPanEncoder(pseudoSeq, "ABCDEFGH", blosum_encode))
 
-def AllmerPrepredict(seq, blosum_encode, reg, state=False):
+def AllmerPanPrepredict(pseudoSeq, seq, blosum_encode, reg, state=False):
     '''Preprediction of the peptide, to find out the binding core and encode the peptide
     allele: string 
         the name of the allele
@@ -307,7 +325,7 @@ def AllmerPrepredict(seq, blosum_encode, reg, state=False):
     trueX: numpy.ndarray
         the only true encoding of the sequence
     '''
-    X, seq_list = AllmerEncoder(seq, blosum_encode)
+    X, seq_list = AllmerPanEncoder(pseudoSeq, seq, blosum_encode)
 
     seqX = pd.DataFrame(np.split(X, [216], axis=1)[0], columns = [i for i in range(216)])
     #predict
@@ -326,7 +344,7 @@ def AllmerPrepredict(seq, blosum_encode, reg, state=False):
     # print(seq+"_"+"done", len(seq))
     return trueX
 
-def AllmerPanEncoder(pseudo_position, MHCseq, peptide, blosum_encode, reg, state=False):
+# def AllmerPanEncoder(pseudo_position, MHCseq, peptide, blosum_encode, reg, state=False):
     '''Pan-specific encoding of peptide and MHC sequence
     pseudo_position: int[]
         the list of pseudo_position, which represents the binding motif
@@ -360,7 +378,7 @@ def AllmerPanEncoder(pseudo_position, MHCseq, peptide, blosum_encode, reg, state
     # print(X.shape)  #(1186,)
     return X
 
-def test_AllmerPanEncoder():
+# def test_AllmerPanEncoder():
     pseudoPosition = PC.HLA_pseudo_sequence
     MHCseq = loadMHCSeq()['HLA-A*01:01']
     peptide = "RRDYRRGL"
@@ -374,23 +392,6 @@ def test_AllmerPanEncoder():
 
 # test_AllmerPanEncoder()
 
-def initialPanEncoder(pseudo_position, initialMHC, randomPeptide, blosum_encode):
-    encoded_peptide, seq_list = AllmerEncoder(randomPeptide, blosum_encode)
-    pseudoSeq = pseudoSeqGenerator(initialMHC, pseudo_position)
-    pseudoX = blosum_encode(pseudoSeq)
-    X = np.concatenate((encoded_peptide.to_numpy().flatten(), pseudoX)).reshape(1, -1)
-
-    return X
-
-def test_initialPanEncoder():
-    randomPep = PF.randomPeptideGenerator(11, 9, 1)[0]
-    MHCSeqDic = loadMHCSeq()
-    initialMHC = MHCSeqDic['HLA-A*01:01']
-    pseudoPosition = PC.HLA_pseudo_sequence
-    iniX = initialPanEncoder(pseudoPosition, initialMHC, randomPep, blosum_encode)
-    print(iniX, iniX.shape, type(iniX))
-
-# test_initialPanEncoder()
 
 def RandomStartPanPredictor(dataset, hidden_node, pseudo_position, blosum_encode):
     '''Prediction of specific allele with initial random-set predictor, 
@@ -418,22 +419,27 @@ def RandomStartPanPredictor(dataset, hidden_node, pseudo_position, blosum_encode
     MHCSeqDic = loadMHCSeq()
 
     ##initialize the predictor
-    iniReg = MLPRegressor(hidden_layer_sizes=(hidden_node), alpha=0.01, max_iter=1000,
+    reg = MLPRegressor(hidden_layer_sizes=(hidden_node), alpha=0.01, max_iter=1000,
                         activation='relu', solver='adam', random_state=2)
+
     #create random X and Y as the data for regression initialization
     randomPep = PF.randomPeptideGenerator(11, 9, 1)
-    iniX, seq_list = AllmerEncoder(randomPep[0], blosum_encode)
-    iniY = [0.1]
-    iniReg.fit(iniX, iniY)
-    
-    iniReg.fit(iniX, iniY)
+    initialMHC = MHCSeqDic['HLA-A*01:01']
+    iniPseudoSeq = pseudoSeqGenerator(initialMHC, PC.HLA_pseudo_sequence)
 
+    iniX, seq_list = AllmerPanEncoder(iniPseudoSeq, randomPep[0], blosum_encode)
+    iniY = [0.1]
+    reg.fit(iniX, iniY)
+    
+    reg.fit(iniX, iniY)
+
+    
     y = dataset.log50k.to_numpy()
 
     #X is encoded below
 
     ##cross_validation not done
-    PreCirNum = 1
+    PreCirNum = 2
     fauc = os.path.join(current_path, "randomStart_roc_auc.csv")
     fr = os.path.join(current_path, "randomStart_pearson.csv")
     avg_auc_list = []
@@ -443,28 +449,34 @@ def RandomStartPanPredictor(dataset, hidden_node, pseudo_position, blosum_encode
         auc_list = []
         r_list = []
         ##encode the peptide
-        X = dataset.apply(lambda x: pd.Series(AllmerPanEncoder(pseudo_position, MHCSeqDic[x.allele], x.peptide, blosum_encode, iniReg, False)),1).to_numpy()
-        # print(X, X.shape)
+        X = dataset.apply(lambda x: pd.Series(AllmerPanPrepredict(pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position), x.peptide, blosum_encode, reg, False)),1).to_numpy()
+
+        kf = KFold(n_splits=5, shuffle=True)
+        for k, (train, test) in enumerate(kf.split(X, y)):
+            print("Round %d fold %d starts" %(i, k))
+            reg.fit(X[train], y[train])
+            scores = reg.predict(X[test])
+            # print(scores)
+            auc = PF.auc_score(y[test], scores, cutoff=.426)
+            r = PF.pearson_score(y[test], scores)
+            auc_list.append(auc)
+            r_list.append(r)
         
-    #     kf = KFold(n_splits=5, shuffle=True)
-    #     for k, (train, test) in enumerate(kf.split(X, y)):
-    #         print("Round %d fold %d starts" %(i, k))
-    #         reg.fit(X[train], y[train])
-    #         scores = reg.predict(X[test])
-    #         auc = PF.auc_score(y[test], scores, cutoff=.426)
-    #         r = PF.pearson_score(y[test], scores)
-    #         auc_list.append(auc)
-    #         r_list.append(r)
-        
-    #     avg_auc = np.mean(auc_list)
-    #     avg_auc_list.append(avg_auc)
-    #     avg_r = np.mean(r_list)
-    #     avg_r_list.append(avg_r)
+        avg_auc = PF.geo_mean(auc_list)
+        avg_auc_list.append(np.array([avg_auc]+auc_list))
+        avg_r = np.mean(r_list)
+        avg_r_list.append(np.array([avg_r]+r_list))
+
+    avg_auc_list = np.array(avg_auc_list)
+    avg_r_list = np.array(avg_r_list)
+
+    # print(avg_auc_list)
+    # print(avg_r_list)
     
-    # auc_df = pd.DataFrame(np.array(avg_auc_list).reshape(1, -1), columns = [str(i)+"-round" for i in range(1, PreCirNum+1)], index=[allele])
-    # r_df = pd.DataFrame(np.array(avg_r_list).reshape(1, -1), columns = [str(i)+"-round" for i in range(1, PreCirNum+1)], index=[allele])
-    # print(auc_df)
-    # print(r_df)
+    auc_df = pd.DataFrame(np.array(avg_auc_list), columns = ['avg_AUC']+[str(i)+"-round" for i in range(1, 6)])
+    r_df = pd.DataFrame(np.array(avg_r_list), columns = ['avg_PCC']+[str(i)+"-round" for i in range(1, 6)])
+    print(auc_df)
+    print(r_df)
 
     # auc_df.to_csv(fauc)
     # r_df.to_csv(fr)
@@ -475,12 +487,14 @@ def test_RandomStartPanPredictor():
     file_path = os.path.join(data_path, "modified_mhc.20130222.csv")
     dataset = pd.read_csv(file_path)
     # shuffled_dataset = shuffle(dataset, random_state=0)
-    allele = 'Patr-A*01:01'
+    # allele = 'Patr-A*01:01'
     pseudoPosition = PC.HLA_pseudo_sequence
-    allele_dataset = dataset.loc[dataset['allele'] == allele]
-    # print(allele_dataset)
-    hidden_node = 5
-    RandomStartPanPredictor(allele_dataset, hidden_node, pseudoPosition, blosum_encode)
+    small_dataset = dataset.loc[dataset['length'] == 12]
+    shuffled_dataset = shuffle(small_dataset, random_state=0)
+    # print(shuffled_dataset)
+    # print(shuffled_dataset.allele.unique())
+    hidden_node = 10
+    RandomStartPanPredictor(shuffled_dataset, hidden_node, pseudoPosition, blosum_encode)
 
 test_RandomStartPanPredictor()
 
