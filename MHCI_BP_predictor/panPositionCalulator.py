@@ -67,6 +67,7 @@ def loadPositionFile():
     Mamu_HLA_filepath = os.path.join(pseudo_path, "Mamu-HLA_psedoSeq_positions.csv")
     panPositionCalculator(Mamu_HLA_filepath, 1)
 
+
 #pseudo sequence length = 40 
 HLA_pseudo_sequence = [5, 7, 9, 24, 45, 59, 62, 63, 66, 67, 69, 70, 73, 74, 76, 77, 80, 81, 84, \
      95, 97, 99, 114, 116, 118, 123, 124, 143, 146, 147, 150, 152, 155, 156, 158, 159, 163, 167, 170, 171]

@@ -462,5 +462,4 @@ def main():
     BuildPredictor(dataset, hidden_node, False, "AllmerPredictionResult")
 
     t1 = time()
-
-print ("Elapsed time (m):", (t1-t0)/60)
+    print ("Elapsed time (m):", (t1-t0)/60)

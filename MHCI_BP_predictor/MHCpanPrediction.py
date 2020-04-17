@@ -47,7 +47,6 @@ def ProcessMHCfile(species, dataset):
         for record in SeqIO.parse(handle, "fasta"):
             #recore['id', 'name', 'discription', 'Seq']
             # print(record.id, record.name)
-            # 使用正则表达式匹配description中的A*80:01:01:01，从而获得序列allele
             for allele in Alist:
                 find_index = record.description.find(allele[4:])
                 if find_index != -1 and ord(record.description[find_index+7]) not in range(48,58) and allele not in deal_allele_list:
@@ -395,16 +394,16 @@ def RandomStartPanPredictor(dataset, hidden_node, pseudo_position, blosum_encode
     fr = os.path.join(current_path, "MHCpan-randomStart_pearson.csv")
     avg_auc_list = []
     avg_r_list = []
-    for i in range(PreCirNum):
-        print("Round %d starts" % i)
+    for rd in range(PreCirNum):
+        print("Round %d starts" % rd)
         auc_list = []
         r_list = []
         ##encode the peptide
         X = dataset.apply(lambda x: pd.Series(AllmerPanPrepredict(pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position), x.peptide, blosum_encode, reg, False)),1).to_numpy()
 
-        kf = KFold(n_splits=5, shuffle=True)
+        kf = KFold(n_splits=5, shuffle=True, random_state=0)
         for k, (train, test) in enumerate(kf.split(X, y)):
-            print("Round %d fold %d starts" %(i, k))
+            print("Round %d fold %d starts" %(rd, k))
             reg.fit(X[train], y[train])
             scores = reg.predict(X[test])
             # print(scores)
@@ -426,13 +425,13 @@ def RandomStartPanPredictor(dataset, hidden_node, pseudo_position, blosum_encode
     # print(avg_auc_list)
     # print(avg_r_list)
     
-    auc_df = pd.DataFrame(np.array(avg_auc_list), columns = ['avg_AUC']+[str(i)+"-round" for i in range(1, 6)])
-    r_df = pd.DataFrame(np.array(avg_r_list), columns = ['avg_PCC']+[str(i)+"-round" for i in range(1, 6)])
+    auc_df = pd.DataFrame(np.array(avg_auc_list[-1]).reshape(1,-1), columns = ['avg_AUC']+[str(i)+"-fold" for i in range(1, 6)], index=[str(hidden_node)])
+    r_df = pd.DataFrame(np.array(avg_r_list[-1]).reshape(1,-1), columns = ['avg_PCC']+[str(i)+"-fold" for i in range(1, 6)], index=[str(hidden_node)])
     print(auc_df)
     print(r_df)
 
-    auc_df.to_csv(fauc)
-    r_df.to_csv(fr)
+    # auc_df.to_csv(fauc)
+    # r_df.to_csv(fr)
     
     return reg, auc_df, r_df
 
@@ -476,13 +475,13 @@ def test_Basic9merPanPrediction():
     pseudoPosition = PC.HLA_pseudo_sequence
     dataset = dataset.loc[dataset['length'] == 9]
     shuffled_dataset = shuffle(dataset, random_state=0)
-    print(shuffled_dataset)
+    # print(shuffled_dataset)
     # print(shuffled_dataset.allele.unique())
     # print(pseudoPosition)
     hidden_node = 20
     Basic9merPanPrediction(shuffled_dataset, hidden_node, pseudoPosition, blosum_encode)
 
-test_Basic9merPanPrediction()
+# test_Basic9merPanPrediction()
 
 def ExistStartPanPredictor(dataset, blosum_encode, hidden_node, pseudo_position):
     MHCSeqDic = loadMHCSeq()
@@ -554,9 +553,9 @@ def allmerPanPredictor(dataset, blosum_encode, hidden_node, ifRandomStart, pseud
         Whether it is random start or exist start
     '''
     if ifRandomStart:
-        reg, auc_df, r_df = RandomStartPanPredictor(dataset, blosum_encode, hidden_node, pseudo_position)
+        reg, auc_df, r_df = RandomStartPanPredictor(dataset, hidden_node, pseudo_position, blosum_encode)
     else:
-        reg, auc_df, r_df = ExistStartPanPredictor(dataset, blosum_encode, hidden_node, pseudo_position)
+        reg, auc_df, r_df = ExistStartPanPredictor(dataset, hidden_node, pseudo_position, blosum_encode)
 
     return reg, auc_df, r_df
 
@@ -585,19 +584,22 @@ def MHCpanBuildPredictor(dataset, blosum_encode, hidden_node, ifRandomStart, pse
     print("Prediction Mode: %s Prediction\nEncode Method: blosum62\nhidden node: %d\noutput filename: %s\n" \
      %(StartType, hidden_node, score_filename))
 
-
-    path = os.path.join(model_path, "allmerPan")
-    ListAUC = []
-    ListPCC = []
+    # path = os.path.join(model_path, "allmerPan")
     
     reg, auc_df, r_df= allmerPanPredictor(dataset, blosum_encode, hidden_node, ifRandomStart, pseudo_position)
     auc_df.to_csv(os.path.join(current_path, score_filename + "_auc.csv"), mode='a', header=False)
     r_df.to_csv(os.path.join(current_path, score_filename + "_PCC.csv"), mode='a', header=False)
-    ListAUC.append(auc_df)
-    ListPCC.append(r_df)
     
-    ListAUCdf = pd.DataFrame(np.array(ListAUC).reshape(1,-1))
-    ListAUCdf.to_csv(os.path.join(current_path, score_filename + "_complete_auc.csv"))
-    ListPCCdf = pd.DataFrame(np.array(ListPCC).reshape(1,-1))
-    ListPCCdf.to_csv(os.path.join(current_path, score_filename + "_complete_PCC.csv"))
 
+def main():
+    file_path = os.path.join(data_path, "modified_mhc.20130222.csv")
+    dataset = pd.read_csv(file_path)
+    pseudoPosition = PC.HLA_pseudo_sequence
+    shuffled_dataset = shuffle(dataset, random_state=0)
+    # print(shuffled_dataset)
+    # print(shuffled_dataset.allele.unique())
+    # print(pseudoPosition)
+    for i in range(20, 40):
+        MHCpanBuildPredictor(shuffled_dataset, blosum_encode, i, True, pseudoPosition, "MHCpan-RandomStart")
+
+main()
