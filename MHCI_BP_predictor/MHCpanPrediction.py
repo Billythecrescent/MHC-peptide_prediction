@@ -514,6 +514,57 @@ def test_Basic9merPanPrediction():
 
 # test_Basic9merPanPrediction()
 
+def Basic9merPanCrossValid(dataset, hidden_node, pseudo_position, blosum_encode):
+    MHCSeqDic = loadMHCSeq()
+    y = dataset.log50k.to_numpy()
+
+    reg = MLPRegressor(hidden_layer_sizes=(hidden_node), alpha=0.01, max_iter=1000,
+                        activation='relu', solver='adam', random_state=2)
+    
+    X = dataset.apply(lambda x: pd.Series(blosum_encode(x.peptide+pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position))),1).to_numpy()
+
+    auc_list = []
+    r_list = []
+    kf = KFold(n_splits=5, shuffle=True)
+    for k, (train, test) in enumerate(kf.split(X, y)):
+        print("Hidden nodee:%d, fold %d starts" %(hidden_node, k))
+        t0 = time()
+        reg.fit(X[train], y[train])
+        scores = reg.predict(X[test])
+        auc = PF.auc_score(y[test], scores, cutoff=.426)
+        r = PF.pearson_score(y[test], scores)
+        auc_list.append(auc)
+        r_list.append(r)
+        t1 = time()
+        print("fold %d done, run in Elapsed time %d(m)" %(k, (t1-t0)/60))
+    print(auc_list)
+    print(r_list)
+    avg_auc = np.mean(auc_list)
+    avg_r = np.mean(r_list)
+
+    return avg_auc, avg_r
+
+def test_Basic9merPanCrossValid():
+    file_path = os.path.join(data_path, "modified_mhc.20130222.csv")
+    dataset = pd.read_csv(file_path)
+    dataset = dataset.loc[dataset['length'] == 9]
+    pseudoPosition = PC.HLA_pseudo_sequence
+    shuffled_dataset = shuffle(dataset, random_state=0)
+    # print(shuffled_dataset)
+    # print(shuffled_dataset.allele.unique())
+    # print(pseudoPosition)
+    AUClist = []
+    PCClist = []
+    for i in range(20, 41):
+        auc, r = Basic9merPanCrossValid(dataset, i, pseudoPosition, blosum_encode)
+        AUClist.append(auc)
+        PCClist.append(r)
+    Scoredf = pd.DataFrame((AUClist,PCClist), columns=[i for i in range(20, 41)], index = ["AUC", "PCC"])
+    Scoredf.to_csv(os.path.join(current_path, "basicPan_crossValidation.csv"))
+    print(Scoredf)
+
+test_Basic9merPanCrossValid()
+
 def ExistStartPanPredictor(dataset, hidden_node, pseudo_position, blosum_encode):
     MHCSeqDic = loadMHCSeq()
     y = dataset.log50k.to_numpy()
@@ -646,7 +697,7 @@ def MHCpanBuildPredictor(dataset, blosum_encode, hidden_node, ifRandomStart, pse
     # path = os.path.join(model_path, "allmerPan")
     
     reg, auc_df, r_df= allmerPanPredictor(dataset, blosum_encode, hidden_node, ifRandomStart, pseudo_position)
-    
+
     auc_df.to_csv(os.path.join(current_path, score_filename + "_auc.csv"), mode='a', header=False)
     r_df.to_csv(os.path.join(current_path, score_filename + "_PCC.csv"), mode='a', header=False)
     
