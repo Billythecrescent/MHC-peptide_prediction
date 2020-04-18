@@ -11,6 +11,9 @@ import os, re
 import pandas as pd
 import numpy as np
 from Bio import SeqIO
+from Bio.SeqRecord import SeqRecord
+from Bio.Seq import Seq
+from Bio.Alphabet import IUPAC
 from time import time
 # from scipy.stats import pearsonr
 from sklearn.utils import shuffle
@@ -30,6 +33,7 @@ current_path = os.path.dirname(os.path.abspath(__file__)) #code\MHC-peptide_pred
 model_path = os.path.join(module_path,"models") #code\MHC-peptide_prediction\models
 data_path = os.path.join(module_path,"data") #code\MHC-peptide_prediction\data
 mhc_path = os.path.join(current_path, "MHC_proteins")
+pseudo_path = os.path.join(current_path, "pseudo")
 
 blosum_encode = PF.blosum_encode
 
@@ -165,13 +169,21 @@ def pseudoSeqGenerator(MHCseq, pseudoPosition):
     return pseudoSeq
 
 def test_pseudoSeqGenerator():
-    pseudoPosition = PC.HLA_pseudo_sequence
+    pseudoPositionDic = {"HLA": PC.HLA_pseudo_sequence, "SLA": PC.SLA_pseudo_sequence, "H-2": PC.H_2_pseudo_sequence, \
+    "Mamu": PC.Mamu_pseudo_sequence, "NetMHC": PC.NetMHC_pseudo_sequence, "global_core": PC.globel_pseudo_sequence_core, \
+        "global_general": PC.globel_pseudo_sequence_general}
     MHCseq = loadMHCSeq()
     dataset = pd.read_csv(os.path.join(data_path, "modified_mhc.20130222.csv"))
     alleles = dataset.allele.unique().tolist()
-    for allele in alleles:
-        allele_seq = pseudoSeqGenerator(MHCseq[allele], pseudoPosition)
-        print(allele_seq)
+
+    for key in pseudoPositionDic:
+        record_list = []
+        for allele in alleles:
+            allele_seq = pseudoSeqGenerator(MHCseq[allele], pseudoPositionDic[key])
+            record = SeqRecord(Seq(allele_seq, IUPAC.protein), id=key+"_"+allele, name=allele+" pseudoSeq",
+                   description="generated pseudo sequence of MHC allele")
+            record_list.append(record)
+        SeqIO.write(record_list, os.path.join(pseudo_path, key+"_pseudoSeqs.fasta"), "fasta")
 
 # test_pseudoSeqGenerator()
 
@@ -481,7 +493,7 @@ def test_Basic9merPanPrediction():
     hidden_node = 20
     Basic9merPanPrediction(shuffled_dataset, hidden_node, pseudoPosition, blosum_encode)
 
-# test_Basic9merPanPrediction()
+test_Basic9merPanPrediction()
 
 def ExistStartPanPredictor(dataset, blosum_encode, hidden_node, pseudo_position):
     MHCSeqDic = loadMHCSeq()
@@ -602,4 +614,4 @@ def main():
     for i in range(20, 40):
         MHCpanBuildPredictor(shuffled_dataset, blosum_encode, i, True, pseudoPosition, "MHCpan-RandomStart")
 
-main()
+# main()

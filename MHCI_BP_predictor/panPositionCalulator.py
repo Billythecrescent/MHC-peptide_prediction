@@ -46,7 +46,11 @@ def panPositionCalculator(filepath, threshold):
     number = len(occurance)
     print("The number of total positions are %d." %number)
     print("The raw occurance of positions is below:")
-    print(occurance)
+    occurance_key = np.array(list(occurance.keys())).reshape(-1, 1)
+    occurance_value = np.array(list(occurance.values())).reshape(-1, 1)
+    occurance_df = pd.DataFrame(np.concatenate((occurance_key, occurance_value), 1), columns=["","frequency"])
+    # print(occurance_df)
+    occurance_df.to_csv(os.path.join(pseudo_path, "PosOccurDistr.csv"), header=True)
     psedo_pos = []
     for key in occurance:
         if occurance[key] > threshold:
@@ -65,12 +69,26 @@ def loadPositionFile():
     H_2_HLA_filepath = os.path.join(pseudo_path, "H-2-HLA_psedoSeq_positions.csv")
     Mamu_filepath = os.path.join(pseudo_path, "Mamu_psedoSeq_positions.csv")
     Mamu_HLA_filepath = os.path.join(pseudo_path, "Mamu-HLA_psedoSeq_positions.csv")
-    panPositionCalculator(Mamu_HLA_filepath, 1)
+    global_filepath = os.path.join(pseudo_path, "Global_pseudoSeq_positions.csv")
+    panPositionCalculator(global_filepath, 3)
 
+# loadPositionFile()
 
 #pseudo sequence length = 40 
 HLA_pseudo_sequence = [5, 7, 9, 24, 45, 59, 62, 63, 66, 67, 69, 70, 73, 74, 76, 77, 80, 81, 84, \
      95, 97, 99, 114, 116, 118, 123, 124, 143, 146, 147, 150, 152, 155, 156, 158, 159, 163, 167, 170, 171]
+
+#length = 36
+globel_pseudo_sequence_core = [5, 7, 9, 24, 45, 59, 62, 63, 66, 67, 69, 70, 73, 74, 76, 77, 80, 81, 84, 95, 97, 99, 114, 116, \
+     123, 143, 146, 147, 150, 152, 155, 156, 159, 163, 167, 171]
+
+#length = 41
+globel_pseudo_sequence_general = [5, 7, 9, 24, 45, 46, 59, 62, 63, 66, 67, 69, 70, 71, 73, 74, 76, 77, 78, 80, 81, 84, 95, 97, \
+     99, 114, 116, 123, 143, 144, 146, 147, 150, 152, 155, 156, 159, 163, 167, 170, 171]
+
+#length = 34
+NetMHC_pseudo_sequence = [7, 9, 24, 45, 59, 62, 63, 66, 67, 69, 70, 73, 74, 76, 77, 80, 81, 84, 95, \
+     97, 99, 114, 116, 118, 143, 147, 150, 152, 156, 158, 159, 163, 167, 171]
 
 #length = 45
 SLA_pseudo_sequence = [6, 7, 8, 9, 45, 46, 60, 63, 64, 66, 67, 68, 70, 71, 73, 74, 77, 78, 80, 81, 82, 84, 85, 95, 99, 100, 116, \
@@ -81,7 +99,7 @@ H_2_pseudo_sequence = [5, 7, 9, 22, 24, 45, 59, 62, 63, 66, 69, 70, 73, 74, 76, 
      114, 116, 123, 142, 143, 146, 147, 150, 152, 155, 156, 159, 163, 167, 171]
 
 #length = 37 (threshold = 0)
-Mamu_pseudo_sequencedd = [5, 7, 9, 24, 36, 45, 59, 62, 63, 66, 67, 69, 70, 73, 74, 76, 77, 80, 81, 84, 95, 97, \
+Mamu_pseudo_sequence = [5, 7, 9, 24, 36, 45, 59, 62, 63, 66, 67, 69, 70, 73, 74, 76, 77, 80, 81, 84, 95, 97, \
      99, 114, 116, 123, 143, 146, 147, 150, 152, 155, 156, 159, 163, 167, 171]
 
 #length = 55
