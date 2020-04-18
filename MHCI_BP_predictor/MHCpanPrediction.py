@@ -337,8 +337,12 @@ def AllmerPanPrepredict(pseudoSeq, seq, blosum_encode, reg, state=False):
         the only true encoding of the sequence
     '''
     X, seq_list = AllmerPanEncoder(pseudoSeq, seq, blosum_encode)
+    peptideX = np.split(X.to_numpy(), [216], axis=1)[0]
+    pseudoSeqX = np.split(X.to_numpy(), [226], axis=1)[1]
+    # print(peptideX.shape, pseudoSeqX.shape)
+    seqX = np.concatenate((peptideX, pseudoSeqX), axis = 1)
+    seqX = pd.DataFrame(seqX)
 
-    seqX = pd.DataFrame(np.split(X, [216], axis=1)[0], columns = [i for i in range(216)])
     #predict
     if state == True:
         scores = reg.predict(seqX).tolist()
@@ -354,6 +358,21 @@ def AllmerPanPrepredict(pseudoSeq, seq, blosum_encode, reg, state=False):
     # print(trueX, trueX.shape)
     # print(seq+"_"+"done", len(seq))
     return trueX
+
+def test_AllmerPanPrepredict():
+    MHCSeqDic = loadMHCSeq()
+    initialMHC = MHCSeqDic['HLA-A*01:01']
+    pseudoPosition = PC.HLA_pseudo_sequence
+    pseudoSeq = pseudoSeqGenerator(initialMHC, pseudoPosition)
+    peptide = "ABCDEFGH"
+    fname = os.path.join(os.path.join(model_path, "pan"), "BasicMHCIpan.joblib")
+    if os.path.exists(fname):
+        ExistReg = joblib.load(fname)
+    else:
+        ExistReg = None
+    AllmerPanPrepredict(pseudoSeq, peptide, blosum_encode, ExistReg, True)
+
+# test_AllmerPanPrepredict()
 
 def RandomStartPanPredictor(dataset, hidden_node, pseudo_position, blosum_encode):
     '''Prediction of specific allele with initial random-set predictor, 
@@ -493,11 +512,21 @@ def test_Basic9merPanPrediction():
     hidden_node = 20
     Basic9merPanPrediction(shuffled_dataset, hidden_node, pseudoPosition, blosum_encode)
 
-test_Basic9merPanPrediction()
+# test_Basic9merPanPrediction()
 
-def ExistStartPanPredictor(dataset, blosum_encode, hidden_node, pseudo_position):
+def ExistStartPanPredictor(dataset, hidden_node, pseudo_position, blosum_encode):
     MHCSeqDic = loadMHCSeq()
     y = dataset.log50k.to_numpy()
+
+    fname = os.path.join(os.path.join(model_path, "pan"), "BasicMHCIpan.joblib")
+    if os.path.exists(fname):
+        ExistReg = joblib.load(fname)
+    else:
+        ExistReg = None
+
+    if ExistReg is None:
+        print ('Locals do not have basic MHCpan model.')
+        return  
 
     reg = MLPRegressor(hidden_layer_sizes=(hidden_node), alpha=0.01, max_iter=1000,
                         activation='relu', solver='adam', random_state=2)
@@ -507,16 +536,19 @@ def ExistStartPanPredictor(dataset, blosum_encode, hidden_node, pseudo_position)
     fr = os.path.join(current_path, "MHCpan-ExistStart_pearson.csv")
     avg_auc_list = []
     avg_r_list = []
-    for i in range(PreCirNum):
-        print("Round %d starts" % i)
+    for rd in range(PreCirNum):
+        print("Round %d starts" % rd)
         auc_list = []
         r_list = []
         ##encode the peptide
-        X = dataset.apply(lambda x: pd.Series(AllmerPanEncoder(pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position), x.peptide, blosum_encode, reg, False)),1).to_numpy()
+        if rd == 0:
+            X = dataset.apply(lambda x: pd.Series(AllmerPanPrepredict(pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position), x.peptide, blosum_encode, ExistReg, True)),1).to_numpy()
+        else:
+            X = dataset.apply(lambda x: pd.Series(AllmerPanPrepredict(pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position), x.peptide, blosum_encode, reg, False)),1).to_numpy()
 
-        kf = KFold(n_splits=5, shuffle=True)
+        kf = KFold(n_splits=5, shuffle=True, random_state=0)
         for k, (train, test) in enumerate(kf.split(X, y)):
-            print("Round %d fold %d starts" %(i, k))
+            print("Round %d fold %d starts" %(rd, k))
             reg.fit(X[train], y[train])
             scores = reg.predict(X[test])
             # print(scores)
@@ -538,15 +570,30 @@ def ExistStartPanPredictor(dataset, blosum_encode, hidden_node, pseudo_position)
     # print(avg_auc_list)
     # print(avg_r_list)
     
-    auc_df = pd.DataFrame(np.array(avg_auc_list), columns = ['avg_AUC']+[str(i)+"-round" for i in range(1, 6)])
-    r_df = pd.DataFrame(np.array(avg_r_list), columns = ['avg_PCC']+[str(i)+"-round" for i in range(1, 6)])
+    auc_df = pd.DataFrame(np.array(avg_auc_list[-1]).reshape(1,-1), columns = ['avg_AUC']+[str(i)+"-fold" for i in range(1, 6)], index=[str(hidden_node)])
+    r_df = pd.DataFrame(np.array(avg_r_list[-1]).reshape(1,-1), columns = ['avg_PCC']+[str(i)+"-fold" for i in range(1, 6)], index=[str(hidden_node)])
     print(auc_df)
     print(r_df)
 
-    auc_df.to_csv(fauc)
-    r_df.to_csv(fr)
+    # auc_df.to_csv(fauc)
+    # r_df.to_csv(fr)
     
     return reg, auc_df, r_df
+
+def test_ExistStartPanPredictor():
+    file_path = os.path.join(data_path, "modified_mhc.20130222.csv")
+    dataset = pd.read_csv(file_path)
+    # shuffled_dataset = shuffle(dataset, random_state=0)
+    # allele = 'Patr-A*01:01'
+    pseudoPosition = PC.HLA_pseudo_sequence
+    small_dataset = dataset.loc[dataset['length'] == 12]
+    shuffled_dataset = shuffle(small_dataset, random_state=0)
+    # print(shuffled_dataset)
+    # print(shuffled_dataset.allele.unique())
+    hidden_node = 10
+    ExistStartPanPredictor(shuffled_dataset, hidden_node, pseudoPosition, blosum_encode)
+
+# test_ExistStartPanPredictor()
 
 def allmerPanPredictor(dataset, blosum_encode, hidden_node, ifRandomStart, pseudo_position):
     '''Choose prediction strategy according to ifRandomStart and perform cross validation
@@ -599,6 +646,7 @@ def MHCpanBuildPredictor(dataset, blosum_encode, hidden_node, ifRandomStart, pse
     # path = os.path.join(model_path, "allmerPan")
     
     reg, auc_df, r_df= allmerPanPredictor(dataset, blosum_encode, hidden_node, ifRandomStart, pseudo_position)
+    
     auc_df.to_csv(os.path.join(current_path, score_filename + "_auc.csv"), mode='a', header=False)
     r_df.to_csv(os.path.join(current_path, score_filename + "_PCC.csv"), mode='a', header=False)
     
