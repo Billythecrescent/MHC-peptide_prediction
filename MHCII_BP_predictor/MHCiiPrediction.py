@@ -34,7 +34,7 @@ mhcii_path = os.path.join(data_path, "mhcii")
 
 blosum_encode = PF2.blosum_encode
 
-def EncodeTo9mer(seq):
+def EncodeTo9mer(seq, blosum_encode):
     '''Transform allmer sequence to potential 9mer binding core
         as described in NetMHC4.0, different from NetMHC3.0 L-mer approximation
     seq: string
@@ -88,7 +88,7 @@ def EncodeTo9mer(seq):
                         LeftPfr = blosum_encode(seq[(slideLeft-3):slideLeft])
                 if slideLeft != (slideEnd):
                     if slideLeft > (slideEnd-3):
-                        RightPfr = np.concatenate((blosum_encode(seq[slideEnd-slideLeft]), np.zeros((3+slideLeft-slideEnd)*24)), axis = 0)
+                        RightPfr = np.concatenate((blosum_encode(seq[(slideLeft+slideLen):]), np.zeros((3+slideLeft-slideEnd)*24)), axis = 0)
                     else:
                         RightPfr = blosum_encode(seq[(slideLeft+slideLen):(slideLeft+slideLen+3)])
                 # print(LeftPfr, LeftPfr.shape)
@@ -120,15 +120,16 @@ def EncodeTo9mer(seq):
         # print(seq_list[0],seq_list[0].shape)
         for i in range(len(seq_list)):
             encoded = np.concatenate((seq_list[i], pfr_list[i], length_seq_list[i], length_slide_list[i], pos_slide_list[i]), axis=0)
+            # print(encoded.shape)
             encoded_list.append(encoded)
     else:
         print("the dimension of the encoding list is not consistent")
         return 
-    print(encoded_list[0], encoded_list[0].shape) #shape=(367,)
-    print(encoded_list)
+    # print(encoded_list[0], encoded_list[0].shape) #shape=(367,)
+    # print(len(encoded_list))
     return encoded_list
 
-# EncodeTo9mer("CELGEWVFS")
+# EncodeTo9mer("CELGEWVFSSVQPPK", blosum_encode)
 
 def NinerEncode(seq):
     '''Encode 9mer mhcii peptide, ready for baseline prediction (use only 9mer for a simple model)
@@ -148,6 +149,7 @@ def NinerEncode(seq):
     pfr = np.zeros(6*24)
     encoded = np.concatenate((seqEncode, pfr, seqLenEncode, length_slide, pos_slide), axis=0)
 
+    
     return encoded
 
 # NinerEncode("CELGEWVFS")
@@ -163,9 +165,9 @@ def Basic9merPrediction(allele, dataset, hidden_node, blosum_encode):
     reg.fit(X,y) 
 
     #store the predictor
-    PanModelPath = os.path.join(model_path, "mhcii")
+    ModelPath = os.path.join(model_path, "mhcii")
     aw = re.sub('[*:]','_', allele) 
-    fname = os.path.join(PanModelPath, "BasicMHCII_"+aw+".joblib")
+    fname = os.path.join(ModelPath, "BasicMHCII_"+aw+".joblib")
     if reg is not None:
         joblib.dump(reg, fname, protocol=2)
         print("basic MHCpan predictor is done.")
@@ -181,7 +183,7 @@ def test_Basic9merPrediction():
     hidden_node = 10
     Basic9merPrediction(allele, dataset, hidden_node, blosum_encode)
 
-test_Basic9merPrediction()
+# test_Basic9merPrediction()
 
 def Basic9merCrossValid(dataset, hidden_node, blosum_encode):
     y = dataset.log50k.to_numpy()
@@ -237,10 +239,8 @@ def test_Basic9merCrossValid():
 
 # test_Basic9merCrossValid()
 
-def AllmerPrepredict(allele, seq, blosum_encode, reg, state):
+def AllmerPrepredict(seq, blosum_encode, reg):
     '''Preprediction of the peptide, to find out the binding core and encode the peptide
-    allele: string 
-        the name of the allele
     seq: string
         the sequence of the peptide, with the length of 8, 9, 10, 11 or other
     blosum_encode: string
@@ -257,9 +257,8 @@ def AllmerPrepredict(allele, seq, blosum_encode, reg, state):
     trueX: numpy.ndarray
         the only true encoding of the sequence
     '''
-    encoded = EncodeTo9mer(allele, seq, blosum_encode)
-    scores = [reg.predict(encoded[i]) for i in range(len(encoded))]
-
+    encoded = EncodeTo9mer(seq, blosum_encode)
+    scores = [reg.predict(encoded[i].reshape(1,-1)) for i in range(len(encoded))]
     # print(scores)
     max_score = max(scores)
     max_score_index = scores.index(max_score)
@@ -271,7 +270,81 @@ def AllmerPrepredict(allele, seq, blosum_encode, reg, state):
     # print(seq+"_"+"done", len(seq))
     return trueX
 
-""" def BuildPredictor(dataset, hidden_node, ifRandomStart, score_filename):
+def test_AllmerPrepredict():
+    peptide = "CELGEWVFSSVQPPK"
+    allele = "HLA-DRB1*0101"
+    aw = re.sub('[*:]','_', allele) 
+    reg = PF2.find_model(aw)
+    if reg is None:
+        print ('Locals do not have model for this allele.')
+        return
+    X = AllmerPrepredict(peptide, blosum_encode, reg)
+    print(X, X.shape)
+
+# test_AllmerPrepredict()
+
+def MHCiiPredictor(allele, dataset, hidden_node, blosum_encode):
+    y = dataset.log50k.to_numpy()
+
+    aw = re.sub('[*:]','_', allele) 
+    ExistReg = PF2.find_model(aw)
+    if ExistReg is None:
+        print ('Locals do not have initial model for this allele.')
+        return
+
+    reg = MLPRegressor(hidden_layer_sizes=(hidden_node), alpha=0.01, max_iter=1000,
+                        activation='relu', solver='adam', random_state=2)
+    ##cross_validation not done
+    PreCirNum = 10
+    fauc = os.path.join(current_path, "MHCii-"+aw+"_roc_auc.csv")
+    fr = os.path.join(current_path, "MHCpan-"+aw+"_pearson.csv")
+    avg_auc_list = []
+    avg_r_list = []
+    for rd in range(PreCirNum):
+        print("Allele %s round %d starts" % (allele, rd))
+        auc_list = []
+        r_list = []
+        ##encode the peptide
+        if rd == 0:
+            X = dataset.peptide.apply(lambda x: pd.Series(AllmerPrepredict(x, blosum_encode, ExistReg)),1).to_numpy()
+        else:
+            X = dataset.peptide.apply(lambda x: pd.Series(AllmerPrepredict(x, blosum_encode, reg)),1).to_numpy()
+
+        kf = KFold(n_splits=5, shuffle=True, random_state=0)
+        for k, (train, test) in enumerate(kf.split(X, y)):
+            print("Round %d fold %d starts" %(rd, k))
+            reg.fit(X[train], y[train])
+            scores = reg.predict(X[test])
+            # print(scores)
+            auc = PF2.auc_score(y[test], scores, cutoff=.426)
+            r = PF2.pearson_score(y[test], scores)
+            auc_list.append(auc)
+            r_list.append(r)
+        
+        avg_auc = np.mean(auc_list)
+        avg_r = np.mean(r_list)
+        if len(avg_auc_list) > 0 and avg_auc < 0.99*avg_auc_list[-1][0]:
+            break
+        avg_auc_list.append(np.array([avg_auc]+auc_list))
+        avg_r_list.append(np.array([avg_r]+r_list))
+
+    avg_auc_list = np.array(avg_auc_list)
+    avg_r_list = np.array(avg_r_list)
+
+    # print(avg_auc_list)
+    # print(avg_r_list)
+    
+    auc_df = pd.DataFrame(np.array(avg_auc_list[-1]).reshape(1,-1), columns = ['avg_AUC']+[str(i)+"-fold" for i in range(1, 6)], index=[str(hidden_node)])
+    r_df = pd.DataFrame(np.array(avg_r_list[-1]).reshape(1,-1), columns = ['avg_PCC']+[str(i)+"-fold" for i in range(1, 6)], index=[str(hidden_node)])
+    print(auc_df)
+    print(r_df)
+
+    # auc_df.to_csv(fauc)
+    # r_df.to_csv(fr)
+    
+    return reg, auc_df, r_df
+
+def BuildPredictor(dataset, hidden_node, score_filename):
     '''Build predictor according to whether it is random start or exist start
         random start uses initialized regression predictor to iterate fitting
         exist start uses existed model to prepredict the binding core of the 
@@ -294,43 +367,28 @@ def AllmerPrepredict(allele, seq, blosum_encode, reg, state):
     # print(shuffled_dataset)
     alleles = dataset.allele.unique().tolist()
 
-    StartType = 'RandomStart'
-    if ifRandomStart == False:
-        StartType = 'ExistStart'
+    print("Prediction\nEncode Method: blosum62\nhidden node: %d\noutput filename: %s\n" \
+     %(hidden_node, score_filename))
 
-    print("Prediction Mode: %s Prediction\nEncode Method: blosum62\nhidden node: %d\noutput filename: %s\n" \
-     %(StartType, hidden_node, score_filename))
-
-
-    path = os.path.join(model_path, "allmer")
-    alleles_auc = []
-    alleles_PCC = []
     for allele in alleles:
-        ##cross validation, determing the training and testing data
-        #Here I need to get the score
         allele_dataset = dataset.loc[dataset['allele'] == allele]
-        reg, auc_df, r_df= allmerPredictor(allele_dataset, allele, blosum_encode, hidden_node, ifRandomStart)
-        auc_df.to_csv(os.path.join(current_path, score_filename + "_auc.csv"), mode='a', header=False)
-        r_df.to_csv(os.path.join(current_path, score_filename + "_PCC.csv"), mode='a', header=False)
-        alleles_auc.append(auc_df)
-        alleles_PCC.append(r_df)
-        # aw = re.sub('[*:]','_',allele)
-        # fname = os.path.join(os.path.join(path, startType), aw +'.joblib')
-        # if reg is not None:
-        #     joblib.dump(reg, fname, protocol=2)
-        #     print("%s fitting of allele %s is done" %(startType, allele))
-    alleles_auc_df = pd.DataFrame(np.array(alleles_auc).reshape(1,-1))
-    alleles_auc_df.to_csv(os.path.join(current_path, score_filename + "_complete_auc.csv"))
-    alleles_PCC_df = pd.DataFrame(np.array(alleles_PCC).reshape(1,-1))
-    alleles_PCC_df.to_csv(os.path.join(current_path, score_filename + "_complete_PCC.csv"))
+        aw = re.sub('[*:]','_', allele)
+        reg, auc_df, r_df= MHCiiPredictor(allele, allele_dataset, hidden_node, blosum_encode)
+        auc_df.to_csv(os.path.join(current_path, score_filename + '_' + aw + "_auc.csv"), mode='a', header=False)
+        r_df.to_csv(os.path.join(current_path, score_filename + '_' + aw + "_PCC.csv"), mode='a', header=False)
 
 def main():
     t0 = time()
 
-    data_path = os.path.join(data_path, "mhcii-DRB1-dataset.csv")
-    dataset = pd.read_csv(data_path)
+    path = os.path.join(data_path, "mhcii-DRB1-dataset.csv")
+    dataset = pd.read_csv(path)
+    dataset = dataset.loc[dataset['allele'] == "HLA-DRB1*0101"]
+    dataset = shuffle(dataset, random_state=0)
+    # print(dataset.shape)
     hidden_node = 20
-    BuildPredictor(dataset, hidden_node, False, "AllmerPredictionResult")
+    BuildPredictor(dataset, hidden_node, "mhciiPredictionResult")
 
     t1 = time()
-    print ("Elapsed time (m):", (t1-t0)/60) """
+    print ("Elapsed time (m):", (t1-t0)/60)
+
+main()

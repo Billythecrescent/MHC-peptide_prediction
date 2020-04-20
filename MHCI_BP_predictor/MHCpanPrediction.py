@@ -187,7 +187,7 @@ def test_pseudoSeqGenerator():
 
 # test_pseudoSeqGenerator()
 
-def SlideTo9mer(seq):
+def EncodeTo9mer(seq, blosum_encode):
     '''Transform allmer sequence to potential 9mer binding core
         as described in NetMHC4.0, different from NetMHC3.0 L-mer approximation
     seq: string
@@ -213,76 +213,53 @@ def SlideTo9mer(seq):
         inseLen = affiCoreLen - seqLen
         #turn 8mer to 9mer
         for i in range(seqLen+1):
-            seq_list.append((seq[:i] + 'X'*inseLen + seq[i:]))
-            length_pep_list.append([1, 0, 0, 0])
-            inserAdele_len_list.append([1, 1, 1] if inseLen > 6 else PF.DecToBinEncode(inseLen, 0, 6))
-            inserAdele_pos_list.append([1, 0, 0] if i == 0 else ([0, 0, 1] if i == seqLen else [0, 1, 0]))
+            seq_list.append(blosum_encode(seq[:i] + 'X'*inseLen + seq[i:]))
+            length_pep_list.append(np.array([1, 0, 0, 0]))
+            inserAdele_len_encoded = [1, 1, 1] if inseLen > 6 else PF.DecToBinEncode(inseLen, 0, 6)
+            inserAdele_len_list.append(np.array(inserAdele_len_encoded))
+            inserAdele_pos_encoded = [1, 0, 0] if i == 0 else ([0, 0, 1] if i == seqLen else [0, 1, 0])
+            inserAdele_pos_list.append(np.array(inserAdele_pos_encoded))
 
     elif seqLen == 9:
-        seq_list.append(seq)
-        length_pep_list.append([0, 1, 0, 0])
-        inserAdele_len_list.append([0, 0, 0])
-        inserAdele_pos_list.append([0, 0, 0])
+        seq_list.append(blosum_encode(seq))
+        length_pep_list.append(np.array([0, 1, 0, 0]))
+        inserAdele_len_list.append(np.array([0, 0, 0]))
+        inserAdele_pos_list.append(np.array([0, 0, 0]))
 
     elif seqLen >= 10:
         deleLen = seqLen - affiCoreLen
         #turen 10mer to 9mer
         for i in range(affiCoreLen+1):
-            seq_list.append(seq[:i] + seq[(i+deleLen):])
+            seq_list.append(blosum_encode(seq[:i] + seq[(i+deleLen):]))
             if seqLen == 10:
-                length_pep_list.append([0, 0, 1, 0])
+                length_pep_list.append(np.array([0, 0, 1, 0]))
             else:
-                length_pep_list.append([0, 0, 0, 1])
-            inserAdele_len_list.append([1, 1, 1] if deleLen > 6 else PF.DecToBinEncode(deleLen, 0, 6))
-            inserAdele_pos_list.append([1, 0, 0] if i == 0 else ([0, 0, 1] if i == affiCoreLen else [0, 1, 0]))
+                length_pep_list.append(np.array([0, 0, 0, 1]))
+            inserAdele_len_encoded = [1, 1, 1] if deleLen > 6 else PF.DecToBinEncode(deleLen, 0, 6)
+            inserAdele_len_list.append(np.array(inserAdele_len_encoded))
+            inserAdele_pos_encoded = [1, 0, 0] if i == 0 else ([0, 0, 1] if i == affiCoreLen else [0, 1, 0])
+            inserAdele_pos_list.append(np.array(inserAdele_pos_encoded))
+    
     #combine the columns to form a dataframe
-    combinded_list = []
+    encoded_list = []
     if len(seq_list) == len(length_pep_list) == len(inserAdele_len_list) ==len(inserAdele_pos_list):
         for i in range(len(seq_list)):
-            combinded_list.append(length_pep_list[i] + inserAdele_len_list[i] + inserAdele_pos_list[i])
+            encoded = np.concatenate((seq_list[i], length_pep_list[i], inserAdele_len_list[i], inserAdele_pos_list[i]), axis=0)
+            # print(encoded.shape)
+            encoded_list.append(encoded)
+            # encoded_list.append(length_pep_list[i] + inserAdele_len_list[i] + inserAdele_pos_list[i])
     else:
         print("the dimension of the encoding list is not consistent")
         return 
 
-    return seq_list, combinded_list
+    # print(len(encoded_list))
+    return encoded_list
 
-# SlideTo9mer("ABCDEFGH")
-
-def SeqEncoding(pseudoSeq, seq, feature, blosum_encode):
-    '''encode the sequence by blosum_encode and combine it with the feature
-        of peptide length, insertion/deletion length&position
-    seq_list: string
-        the 9mer peptides generated from allmer by 'SlideTo9mer'
-    feature: int[]
-        the encoding of the feartures, described above
-    blosum_encode: function
-        the encoding function for seq
-    
-    Return:
-    -------
-    encoded: np.array
-        the encoded sequence with its features
-    '''
-    encoded_peptide = blosum_encode(seq)
-    encoded = np.hstack((encoded_peptide, np.array(feature))) #(226,)
-    pseudoX = blosum_encode(pseudoSeq)
-    encoded = np.concatenate((encoded, pseudoX))
-
-    return encoded  # shape = (1186,)
-
-def test_SeqEncoding():
-    seq_list, feature_list = SlideTo9mer("ABCDEFGH")
-    MHCSeqDic = loadMHCSeq()
-    initialMHC = MHCSeqDic['HLA-A*01:01']
-    pseudoPosition = PC.HLA_pseudo_sequence
-    pseudoSeq = pseudoSeqGenerator(initialMHC, pseudoPosition)
-    print(SeqEncoding(pseudoSeq, seq_list[0], feature_list[0], blosum_encode))
+# EncodeTo9mer("ABCDEFGH", blosum_encode)
 
 def AllmerPanEncoder(pseudoSeq, seq, blosum_encode):
     '''Encode the peptide of allmer, with the encoding of peptide length, 
         deletion/insertion length, and deletion/insertion position
-    allele: string 
-        the name of the allele
     seq: string
         the sequence of the peptide, with the length of 8, 9, 10, 11 or other
     blosum_encode: string
@@ -290,24 +267,16 @@ def AllmerPanEncoder(pseudoSeq, seq, blosum_encode):
 
     Return:
     -------
-    encoding: numpy.array
-        the encoding array of seq, X
-    seq_list: string[]
-        the list of the potential 9mer binding core
+    X: numpy.array
+        the encoding array of peptide, peptide feature and pseudo sequence
     '''
 
-    seq_list, feature_list = SlideTo9mer(seq)
-    seq_df = pd.DataFrame(seq_list, columns=['peptide'])
-    X = seq_df.peptide.apply(lambda x: pd.Series(SeqEncoding(pseudoSeq, x, feature_list[seq_list.index(x)], blosum_encode)),1)
-    """ ####--- Scale the matrix ---####
-    splitX = np.split(X, [216], axis=1)
-    #scale the data to [-1, 1] use Abs
-    scaler = MaxAbsScaler()
-    # print(pd.DataFrame(scaler.fit_transform(splitX[0]), columns = [i for i in range(216)]))
-    X = pd.concat((pd.DataFrame(scaler.fit_transform(splitX[0]), columns = [i for i in range(216)]), splitX[1]), axis=1) """
-    # print(X)  # 24*9+(4+3+3) = 226
-
-    return X, seq_list  # the shape of X is (9, 1186)
+    encoded = EncodeTo9mer(seq, blosum_encode)
+    pseudoX = blosum_encode(pseudoSeq)
+    X = [np.concatenate((encoded[i], pseudoX), axis=0) for i in range(len(encoded))]
+    
+    X = np.array(X)
+    return X    # the shape of X is (9, 1186)
 
 def test_AllmerPanEncoder():
     MHCSeqDic = loadMHCSeq()
@@ -316,10 +285,12 @@ def test_AllmerPanEncoder():
     pseudoSeq = pseudoSeqGenerator(initialMHC, pseudoPosition)
     print(AllmerPanEncoder(pseudoSeq, "ABCDEFGH", blosum_encode))
 
+# test_AllmerPanEncoder()
+
 def AllmerPanPrepredict(pseudoSeq, seq, blosum_encode, reg, state=False):
     '''Preprediction of the peptide, to find out the binding core and encode the peptide
-    allele: string 
-        the name of the allele
+    pseudoSeq: string 
+        the pseudo sequecen of MHC allele
     seq: string
         the sequence of the peptide, with the length of 8, 9, 10, 11 or other
     blosum_encode: string
@@ -336,25 +307,24 @@ def AllmerPanPrepredict(pseudoSeq, seq, blosum_encode, reg, state=False):
     trueX: numpy.ndarray
         the only true encoding of the sequence
     '''
-    X, seq_list = AllmerPanEncoder(pseudoSeq, seq, blosum_encode)
-    peptideX = np.split(X.to_numpy(), [216], axis=1)[0]
-    pseudoSeqX = np.split(X.to_numpy(), [226], axis=1)[1]
+    X = AllmerPanEncoder(pseudoSeq, seq, blosum_encode)
+    peptideX = np.split(X, [216], axis=1)[0]
+    pseudoSeqX = np.split(X, [226], axis=1)[1]
     # print(peptideX.shape, pseudoSeqX.shape)
     seqX = np.concatenate((peptideX, pseudoSeqX), axis = 1)
-    seqX = pd.DataFrame(seqX)
 
     #predict
     if state == True:
-        scores = reg.predict(seqX).tolist()
+        scores = [reg.predict(seqX[i].reshape(1,-1)) for i in range(len(seqX))]
     else:
-        scores = reg.predict(X).tolist()
+        scores = [reg.predict(X[i].reshape(1,-1)) for i in range(len(X))]
+
     # print(scores)
     max_score = max(scores)
     max_score_index = scores.index(max_score)
-    binding_core = seq_list[max_score_index]
-    # print(binding_core, max_score)
+    # print(max_score_index)
     
-    trueX = X.iloc[max_score_index].to_numpy()
+    trueX = X[max_score_index]
     # print(trueX, trueX.shape)
     # print(seq+"_"+"done", len(seq))
     return trueX
@@ -364,7 +334,7 @@ def test_AllmerPanPrepredict():
     initialMHC = MHCSeqDic['HLA-A*01:01']
     pseudoPosition = PC.HLA_pseudo_sequence
     pseudoSeq = pseudoSeqGenerator(initialMHC, pseudoPosition)
-    peptide = "ABCDEFGH"
+    peptide = "WEABCDEFGH"
     fname = os.path.join(os.path.join(model_path, "pan"), "BasicMHCIpan.joblib")
     if os.path.exists(fname):
         ExistReg = joblib.load(fname)
@@ -408,7 +378,7 @@ def RandomStartPanPredictor(dataset, hidden_node, pseudo_position, blosum_encode
     initialMHC = MHCSeqDic['HLA-A*01:01']
     iniPseudoSeq = pseudoSeqGenerator(initialMHC, PC.HLA_pseudo_sequence)
 
-    iniX, seq_list = AllmerPanEncoder(iniPseudoSeq, randomPep[0], blosum_encode)
+    iniX = AllmerPanEncoder(iniPseudoSeq, randomPep[0], blosum_encode)
     iniY = [0.1]
     reg.fit(iniX, iniY)
     
@@ -514,15 +484,10 @@ def test_Basic9merPanPrediction():
 
 # test_Basic9merPanPrediction()
 
-def Basic9merPanCrossValid(dataset, hidden_node, pseudo_position, blosum_encode):
-    MHCSeqDic = loadMHCSeq()
-    y = dataset.log50k.to_numpy()
-
+def Basic9merPanCrossValid(X, y, hidden_node, blosum_encode):
     reg = MLPRegressor(hidden_layer_sizes=(hidden_node), alpha=0.01, max_iter=1000,
                         activation='relu', solver='adam', random_state=2)
     
-    X = dataset.apply(lambda x: pd.Series(blosum_encode(x.peptide+pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position))),1).to_numpy()
-
     auc_list = []
     r_list = []
     kf = KFold(n_splits=5, shuffle=True)
@@ -553,14 +518,22 @@ def test_Basic9merPanCrossValid():
     # print(shuffled_dataset)
     # print(shuffled_dataset.allele.unique())
     # print(pseudoPosition)
+    MHCSeqDic = loadMHCSeq()
+    y = dataset.log50k.to_numpy()
+    X = dataset.apply(lambda x: pd.Series(blosum_encode(x.peptide+pseudoSeqGenerator(MHCSeqDic[x.allele], pseudoPosition))),1).to_numpy()
+
     AUClist = []
     PCClist = []
-    for i in range(20, 41):
-        auc, r = Basic9merPanCrossValid(dataset, i, pseudoPosition, blosum_encode)
+    header = pd.DataFrame(np.array(["AUC", "PCC"]).reshape(1, -1), index=["hidden node"])
+    header.to_csv(os.path.join(current_path, "basicPan_crossValidation.csv"), mode='a', header=False)
+    HiddenRange = range(41, 80)
+    for i in HiddenRange:
+        auc, r = Basic9merPanCrossValid(X, y, i, blosum_encode)
+        score = pd.DataFrame(np.array([auc, r]).reshape(1, -1), columns=["AUC", "PCC"], index=[str(i)])
+        score.to_csv(os.path.join(current_path, "basicPan_crossValidation.csv"), mode='a', header=False)
         AUClist.append(auc)
         PCClist.append(r)
-    Scoredf = pd.DataFrame((AUClist,PCClist), columns=[i for i in range(20, 41)], index = ["AUC", "PCC"])
-    Scoredf.to_csv(os.path.join(current_path, "basicPan_crossValidation.csv"))
+    Scoredf = pd.DataFrame((AUClist,PCClist), columns=[i for i in HiddenRange], index = ["AUC", "PCC"])
     print(Scoredf)
 
 test_Basic9merPanCrossValid()
@@ -707,7 +680,8 @@ def main():
     dataset = pd.read_csv(file_path)
     pseudoPosition = PC.HLA_pseudo_sequence
     shuffled_dataset = shuffle(dataset, random_state=0)
-    # print(shuffled_dataset)
+    # small_dataset = dataset.loc[dataset['length'] == 9]
+    # print(dataset)
     # print(shuffled_dataset.allele.unique())
     # print(pseudoPosition)
     for i in range(20, 40):

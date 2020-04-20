@@ -165,8 +165,8 @@ def pearson_score(true, sc):
     r, p = pearsonr(true, sc)
     return r
 
-def find_model(allele, length):
-    '''Find model for alleles of different lengths. 9mer: ../model/  non9mer: ../model/Non9mer/
+def find_model(aw):
+    '''Find model for alleles of mhcii
     SHOULD "import joblib" first
     allele: string
         standardized allele name (by regex according to the prediction method)
@@ -179,10 +179,7 @@ def find_model(allele, length):
     reg: MLPRegressor
         the regression predictor
     '''
-    if length != 9:
-        fname = os.path.join(os.path.join(model_path, "Non9mer"), allele + "-" + str(length) +'.joblib')
-    elif length == 9:
-        fname = os.path.join(model_path, allele+'.joblib')
+    fname = os.path.join(os.path.join(model_path, "mhcii"), "BasicMHCII_"+aw+".joblib")
     print(fname)
     if os.path.exists(fname):
         reg = joblib.load(fname)
