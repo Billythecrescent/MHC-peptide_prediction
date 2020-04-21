@@ -67,7 +67,7 @@ def build_predictor(training_data, allele, encoder, hidden_node):
     
     reg = MLPRegressor(hidden_layer_sizes=(hidden_node), alpha=0.01, max_iter=5000, early_stopping=True,
                         activation='relu', solver='adam', random_state=2)
-    X = data.peptide.apply(lambda x: pd.Series(encoder(x)),1) #Find bug: encoding result has NaN
+    X = data.peptide.apply(lambda x: pd.Series(encoder(x)),1) 
     y = data.log50k
 
     ## ---- TEST ---- ##
@@ -117,13 +117,13 @@ def basicMHCiCrossValid(X, y, hidden_node):
 
     return avg_auc, avg_r
 
-def test_Basic9merPanCrossValid():
+def test_Basic9merCrossValid():
     file_path = os.path.join(data_path, "modified_mhc.20130222.csv")
     dataset = pd.read_csv(file_path)
     dataset = dataset.loc[dataset['length'] == 9]
     alleles = dataset.allele.unique().tolist()
     # print(dataset)
-    HiddenRange = range(10,60)
+    HiddenRange = range(60,61)
     header = pd.DataFrame(np.array(HiddenRange).reshape(1, -1), index=["hidden node"])
     header.to_csv(os.path.join(current_path, "basicMHC_One_crossValidation_auc.csv"), mode='a', header=False)
     header.to_csv(os.path.join(current_path, "basicMHC_One_crossValidation_pcc.csv"), mode='a', header=False)
@@ -150,14 +150,20 @@ def test_Basic9merPanCrossValid():
         print("%s is done, run in Elapsed time %d(m)" %(allele, (t1-t0)/60))
 
 
-test_Basic9merPanCrossValid()
+# test_Basic9merCrossValid()
 
-def main(hidden_node):
+def BuildModel(hidden_node):
     allmer_mhci = os.path.join(data_path, "modified_mhc.20130222.csv")
     dataset = pd.read_csv(allmer_mhci)
     allele_dataset = dataset.loc[dataset['length'] == 9]
-    training_data = allele_dataset
-    # print(training_data)
-    build_prediction_model(training_data, hidden_node)
+    alleles = allele_dataset.allele.unique().tolist()
+    for allele in alleles:
+        data = allele_dataset.loc[allele_dataset['allele'] == allele]
+        aw = re.sub('[*:]','_', allele) 
+        fname = os.path.join(model_path, aw+'.joblib')
+        reg = build_predictor(data, allele, blosum_encode, hidden_node)
+        if reg is not None:
+            joblib.dump(reg, fname, protocol=2)
+            print("predictor for allele %s is done" %allele)
 
-# main(20)
+BuildModel(14)

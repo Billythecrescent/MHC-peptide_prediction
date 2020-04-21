@@ -526,7 +526,7 @@ def test_Basic9merPanCrossValid():
     PCClist = []
     header = pd.DataFrame(np.array(["AUC", "PCC"]).reshape(1, -1), index=["hidden node"])
     header.to_csv(os.path.join(current_path, "basicPan_crossValidation.csv"), mode='a', header=False)
-    HiddenRange = range(41, 80)
+    HiddenRange = range(41, 60)
     for i in HiddenRange:
         auc, r = Basic9merPanCrossValid(X, y, i, blosum_encode)
         score = pd.DataFrame(np.array([auc, r]).reshape(1, -1), columns=["AUC", "PCC"], index=[str(i)])

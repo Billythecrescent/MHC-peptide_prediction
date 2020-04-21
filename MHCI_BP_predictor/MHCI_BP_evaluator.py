@@ -118,35 +118,20 @@ def predict_8mer(allele, seq):
 def predict_non9mer(allele, seq):
 
     seq_list = []
-    if len(seq) == 8:
+    seqLen = len(seq)
+    if seqLen == 8:
         #turn 8mer to 9mer
         for i in range(5):
             seq_list.append(seq[:(i+3)]+'X'+seq[(i+3):])
 
-    elif len(seq) == 10:
+    elif seqLen >= 10:
+        bulg = seqLen - 9
         #turen 10mer to 9mer
-        for i in range(6):
-            seq_list.append(seq[:(i+3)]+seq[(i+4):])
-    
-    elif len(seq) == 11:
-        #turn 11mer to 9mer
-        #delete two amino acids
-        ##assumption: we treat the deletion situation equally
         for i in range(3, 9):
-            seq_list.append(seq[:(i)]+seq[(i+2):])
-        for i in range(3, 8):
-            seq_list.append(seq[:(i)]+seq[(i+1)]+seq[(i+3):])
-        for i in range(3, 7):
-            seq_list.append(seq[:(i)]+seq[(i+1):(i+3)]+seq[(i+4):])
-        for i in range(3, 6):
-            seq_list.append(seq[:(i)]+seq[(i+1):(i+4)]+seq[(i+5):])    
-        for i in range(3, 5):
-            seq_list.append(seq[:(i)]+seq[(i+1):(i+5)]+seq[(i+6):])   
-        for i in range(3, 4):
-            seq_list.append(seq[:(i)]+seq[(i+1):(i+6)]+seq[(i+7):])
-    
+            seq_list.append(seq[:i]+seq[(i+bulg):])
+  
     seq_df = pd.DataFrame(seq_list, columns=['peptide'])
-    # print(seq_df)
+    print(seq_df)
 
     #encode
     X = seq_df.peptide.apply(lambda x: pd.Series(blosum_encode(x)),1)
@@ -168,6 +153,7 @@ def predict_non9mer(allele, seq):
 
 # print(predict_non9mer("HLA-A*01:01", "YYRYPTGESY"))
 # print(predict_non9mer("HLA-A*01:01", "YSLEYFQFVKK"))
+# print(predict_non9mer('HLA-A*01:01', "ABCDEABCDEABCDEABCDEABCDEABCDE"))
 
 def LengthFree_predictor(allele, data):
 
@@ -225,16 +211,11 @@ def Process_LengthFree_Prediction(dataset_filename):
 
 def get_evaluation_by_allele():
     
-    # alleles = ["HLA-A*01:01", "HLA-A*02:01", "HLA-A*02:02", "HLA-A*02:03", "HLA-A*02:06"]
-    comp=[]
-    evalset = ep.get_evaluation_set(length=9) #type: DataFrame
-
-    # #write training dataframe to csv file
-    # evalset.to_csv(os.path.join('evaluate_data.csv'))
-    
-    test_alleles = evalset.allele.unique() #numpy.ndarray 'str'
-    # print(test_alleles)
-    for allele in test_alleles:
+    path = os.path.join(data_path, "modified_mhc.20130222.csv")
+    dataset = pd.read_csv(path)
+    alleles = dataset.allele.unique().tolist()
+    print(alleles)
+    for allele in alleles:
         data = ep.get_evaluation_set(allele, length=9)
         X = data.peptide.apply(lambda x: pd.Series(blosum_encode(x)),1)
         y = data.log50k
@@ -243,10 +224,4 @@ def get_evaluation_by_allele():
         # print(result)
         comp.append(result)
 
-    # print(comp)
-    # print(test_alleles.tolist())
-    #Write Result
-    # comp_df = pd.DataFrame(comp, index = test_alleles.tolist())
-    # print(comp_df)
-
-# main()
+    
