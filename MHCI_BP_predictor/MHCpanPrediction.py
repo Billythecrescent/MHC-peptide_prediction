@@ -370,7 +370,7 @@ def RandomStartPanPredictor(dataset, hidden_node, pseudo_position, blosum_encode
     MHCSeqDic = loadMHCSeq()
 
     ##initialize the predictor
-    reg = MLPRegressor(hidden_layer_sizes=(hidden_node), alpha=0.01, max_iter=1000,
+    reg = MLPRegressor(hidden_layer_sizes=(hidden_node), alpha=0.01, max_iter=5000,
                         activation='relu', solver='adam', random_state=2)
 
     #create random X and Y as the data for regression initialization
@@ -536,7 +536,7 @@ def test_Basic9merPanCrossValid():
     Scoredf = pd.DataFrame((AUClist,PCClist), columns=[i for i in HiddenRange], index = ["AUC", "PCC"])
     print(Scoredf)
 
-test_Basic9merPanCrossValid()
+# test_Basic9merPanCrossValid()
 
 def ExistStartPanPredictor(dataset, hidden_node, pseudo_position, blosum_encode):
     MHCSeqDic = loadMHCSeq()
@@ -684,7 +684,7 @@ def main():
     # print(dataset)
     # print(shuffled_dataset.allele.unique())
     # print(pseudoPosition)
-    for i in range(20, 40):
+    for i in range(80, 91):
         MHCpanBuildPredictor(shuffled_dataset, blosum_encode, i, True, pseudoPosition, "MHCpan-RandomStart")
 
-# main()
+main()

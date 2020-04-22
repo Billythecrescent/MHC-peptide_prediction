@@ -135,6 +135,9 @@ def randomPeptideGenerator(TranscribeTableNum, l, seqNum):
 
 def geo_mean(iterable):
     nplist = np.array(iterable)
+    for i in range(len(nplist)):
+        if nplist[i] < 0 or nplist[i] == 0:
+            nplist[i] = 0.001
     return nplist.prod()**(1.0/len(nplist))
 
 def auc_score(true,sc,cutoff = None):
