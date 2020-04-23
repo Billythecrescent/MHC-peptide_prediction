@@ -106,9 +106,10 @@ def LengthFree_predictor(allele, data):
 
     #Generate auc value
     auc = PF.auc_score(y, data_scores,cutoff=.426)
+    pcc = PF.pearson_score(y, data_scores)
     # print(auc)
 
-    return auc
+    return auc, pcc
 
 ## Primary Test ##
 # allele = "HLA-A*01:01"
@@ -135,18 +136,18 @@ def get_evaluation_by_allele():
     dataset = dataset.loc[dataset['length'] != 9]
     # print(dataset)
     alleles = dataset.allele.unique().tolist()
-    header = pd.DataFrame(np.array(["AUC"]).reshape(1, -1), index=["allele"])
+    header = pd.DataFrame(np.array(["AUC", "PCC"]).reshape(1, -1), index=["allele"])
     header.to_csv(os.path.join(current_path, "MHCi2_L-appro_scores.csv"), mode='a', header=False)
     print(alleles)
     for allele in alleles:
         t0 = time()
         data = dataset.loc[dataset['allele'] == allele]
-        auc = LengthFree_predictor(allele, data)
-        performance = pd.DataFrame(np.array([auc]).reshape(1, -1), columns=['AUC'], index=[allele])
+        auc, pcc = LengthFree_predictor(allele, data)
+        performance = pd.DataFrame(np.array([auc, pcc]).reshape(1, -1), columns=['AUC', 'PCC'], index=[allele])
         performance.to_csv(os.path.join(current_path, "MHCi2_L-appro_scores.csv"), mode='a', header=False)
         print(performance)
         t1 = time()
         print("%s is done, run in Elapsed time %d(m)" %(allele, (t1-t0)/60))
         
-# get_evaluation_by_allele()
+get_evaluation_by_allele()
     

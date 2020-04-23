@@ -94,6 +94,22 @@ def datasetOutput(dataset, format = None, output_filename = None):
         elif output_filename != None:
             dataset.to_csv(os.path.join(module_path, output_filename + ".csv"))
 
+
+def datasetLengthDistribution(dataset, outputPath):
+    lengths = dataset.length
+    length_unique, length_counts = np.unique(lengths, return_counts=True)
+    # print(length_counts)
+    LengthDistr = pd.DataFrame(length_counts, columns=["counts"], index=length_unique)
+    print(LengthDistr)
+    LengthDistr.to_csv(outputPath)
+
+def test_datasetLengthDistribution():
+    mhcii_dataset = pd.read_csv(os.path.join(data_path, "mhcii-DRB1-dataset.csv"))
+    dataset = mhcii_dataset.loc[mhcii_dataset["allele"] == "HLA-DRB1*0101"]
+    datasetLengthDistribution(dataset, os.path.join(module_path, "Distr-mhcii-DRB1.csv"))
+
+test_datasetLengthDistribution()
+
 # train_set1 = ep.get_training_set(length=8)
 # train_set2 = ep.get_training_set(length=10)
 # train_set3 = ep.get_training_set(length=11)
@@ -103,10 +119,7 @@ def datasetOutput(dataset, format = None, output_filename = None):
 # data10mer = pd.read_csv(os.path.join(data_path, "ep_11mer_training_data.csv"))
 # print(datasetDistribute(data10mer, 'csv', "Distri_ep_11mer_training_data"))
 
-data_allmer = pd.read_csv(os.path.join(data_path, "modified_mhc.20130222.csv"))
-datasetAllele(data_allmer, output_filename = "mhci_allmer")
-datasetDistribute(data_allmer, 'log50k', 'csv', "Distri_mhci_allmer_data", 0.426)
-
-# IEDB_mhci_dataset = pd.read_csv(os.path.join(data_path, "bdata.20130222.mhci.csv"))
-# print(IEDB_mhci_dataset)
-# print(datasetDistribute(IEDB_mhci_dataset, 'csv', "distribution_bdata.20130222.mhci"))
+# data_allmer = pd.read_csv(os.path.join(data_path, "modified_mhc.20130222.csv"))
+# datasetAllele(data_allmer, output_filename = "mhci_allmer")
+# dataset = data_allmer.loc[data_allmer['length'] != 9]
+# datasetDistribute(dataset, 'log50k', 'csv', "Distri_mhci_non9mer_data", 0.426)
