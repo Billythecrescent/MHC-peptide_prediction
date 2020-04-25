@@ -276,12 +276,13 @@ def AllmerPanEncoder(pseudoSeq, seq, blosum_encode):
     X = [np.concatenate((encoded[i], pseudoX), axis=0) for i in range(len(encoded))]
     
     X = np.array(X)
-    return X    # the shape of X is (9, 1186)
+    
+    return X    # the shape of X is (9, 1186) for HLApseido, is (9, 1042) for NetMHCpseudo
 
 def test_AllmerPanEncoder():
     MHCSeqDic = loadMHCSeq()
     initialMHC = MHCSeqDic['HLA-A*01:01']
-    pseudoPosition = PC.HLA_pseudo_sequence
+    pseudoPosition = PC.NetMHC_pseudo_sequence
     pseudoSeq = pseudoSeqGenerator(initialMHC, pseudoPosition)
     print(AllmerPanEncoder(pseudoSeq, "ABCDEFGH", blosum_encode))
 
@@ -332,7 +333,7 @@ def AllmerPanPrepredict(pseudoSeq, seq, blosum_encode, reg, state=False):
 def test_AllmerPanPrepredict():
     MHCSeqDic = loadMHCSeq()
     initialMHC = MHCSeqDic['HLA-A*01:01']
-    pseudoPosition = PC.HLA_pseudo_sequence
+    pseudoPosition = PC.NetMHC_pseudo_sequence
     pseudoSeq = pseudoSeqGenerator(initialMHC, pseudoPosition)
     peptide = "WEABCDEFGH"
     fname = os.path.join(os.path.join(model_path, "pan"), "BasicMHCIpan.joblib")
@@ -376,7 +377,7 @@ def RandomStartPanPredictor(dataset, hidden_node, pseudo_position, blosum_encode
     #create random X and Y as the data for regression initialization
     randomPep = PF.randomPeptideGenerator(11, 9, 1)
     initialMHC = MHCSeqDic['HLA-A*01:01']
-    iniPseudoSeq = pseudoSeqGenerator(initialMHC, PC.HLA_pseudo_sequence)
+    iniPseudoSeq = pseudoSeqGenerator(initialMHC, pseudo_position)
 
     iniX = AllmerPanEncoder(iniPseudoSeq, randomPep[0], blosum_encode)
     iniY = [0.1]
@@ -464,7 +465,7 @@ def Basic9merPanPrediction(dataset, hidden_node, pseudo_position, blosum_encode)
 
     #store the predictor
     PanModelPath = os.path.join(model_path, "pan")
-    fname = os.path.join(PanModelPath, "BasicMHCIpan.joblib")
+    fname = os.path.join(PanModelPath, "BasicMHCIpan_NetMHC.joblib")
     if reg is not None:
         joblib.dump(reg, fname, protocol=2)
         print("basic MHCpan predictor is done.")
@@ -473,7 +474,7 @@ def Basic9merPanPrediction(dataset, hidden_node, pseudo_position, blosum_encode)
 def test_Basic9merPanPrediction():
     file_path = os.path.join(data_path, "modified_mhc.20130222.csv")
     dataset = pd.read_csv(file_path)
-    pseudoPosition = PC.HLA_pseudo_sequence
+    pseudoPosition = PC.NetMHC_pseudo_sequence
     dataset = dataset.loc[dataset['length'] == 9]
     shuffled_dataset = shuffle(dataset, random_state=0)
     # print(shuffled_dataset)
@@ -542,7 +543,7 @@ def ExistStartPanPredictor(dataset, hidden_node, pseudo_position, blosum_encode)
     MHCSeqDic = loadMHCSeq()
     y = dataset.log50k.to_numpy()
 
-    fname = os.path.join(os.path.join(model_path, "pan"), "BasicMHCIpan.joblib")
+    fname = os.path.join(os.path.join(model_path, "pan"), "BasicMHCIpan_NetMHC.joblib")
     if os.path.exists(fname):
         ExistReg = joblib.load(fname)
     else:
@@ -609,7 +610,8 @@ def test_ExistStartPanPredictor():
     dataset = pd.read_csv(file_path)
     # shuffled_dataset = shuffle(dataset, random_state=0)
     # allele = 'Patr-A*01:01'
-    pseudoPosition = PC.HLA_pseudo_sequence
+    # pseudoPosition = PC.HLA_pseudo_sequence
+    pseudoPosition = PC.NetMHC_pseudo_sequence
     small_dataset = dataset.loc[dataset['length'] == 12]
     shuffled_dataset = shuffle(small_dataset, random_state=0)
     # print(shuffled_dataset)
@@ -678,13 +680,13 @@ def MHCpanBuildPredictor(dataset, blosum_encode, hidden_node, ifRandomStart, pse
 def main():
     file_path = os.path.join(data_path, "modified_mhc.20130222.csv")
     dataset = pd.read_csv(file_path)
-    pseudoPosition = PC.HLA_pseudo_sequence
+    pseudoPosition = PC.NetMHC_pseudo_sequence
     shuffled_dataset = shuffle(dataset, random_state=0)
     # small_dataset = dataset.loc[dataset['length'] == 9]
     # print(dataset)
     # print(shuffled_dataset.allele.unique())
     # print(pseudoPosition)
-    for i in range(80, 91):
-        MHCpanBuildPredictor(shuffled_dataset, blosum_encode, i, True, pseudoPosition, "MHCpan-RandomStart")
+    for i in range(50, 61):
+        MHCpanBuildPredictor(shuffled_dataset, blosum_encode, i, False, pseudoPosition, "MHCpan-ExistStart-NetMHC")
 
 main()

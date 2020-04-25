@@ -1,0 +1,376 @@
+nohup: ignoring input
+Prediction Mode: RandomStart Prediction
+Encode Method: blosum62
+hidden node: 80
+output filename: MHCpan-RandomStart
+
+Round 0 starts
+Round 0 fold 0 starts
+Round 0 fold 1 starts
+Round 0 fold 2 starts
+Round 0 fold 3 starts
+Round 0 fold 4 starts
+Round 1 starts
+Round 1 fold 0 starts
+Round 1 fold 1 starts
+Round 1 fold 2 starts
+Round 1 fold 3 starts
+Round 1 fold 4 starts
+Round 2 starts
+Round 2 fold 0 starts
+Round 2 fold 1 starts
+Round 2 fold 2 starts
+Round 2 fold 3 starts
+Round 2 fold 4 starts
+Round 3 starts
+Round 3 fold 0 starts
+Round 3 fold 1 starts
+Round 3 fold 2 starts
+Round 3 fold 3 starts
+Round 3 fold 4 starts
+     avg_AUC    1-fold    2-fold    3-fold   4-fold   5-fold
+80  0.745255  0.767042  0.706574  0.705009  0.78791  0.75974
+     avg_PCC    1-fold    2-fold    3-fold    4-fold    5-fold
+80  0.655305  0.672702  0.671489  0.621513  0.646224  0.664598
+Prediction Mode: RandomStart Prediction
+Encode Method: blosum62
+hidden node: 81
+output filename: MHCpan-RandomStart
+
+Round 0 starts
+Round 0 fold 0 starts
+Round 0 fold 1 starts
+Round 0 fold 2 starts
+Round 0 fold 3 starts
+Round 0 fold 4 starts
+Round 1 starts
+Round 1 fold 0 starts
+Round 1 fold 1 starts
+Round 1 fold 2 starts
+Round 1 fold 3 starts
+Round 1 fold 4 starts
+Round 2 starts
+Round 2 fold 0 starts
+Round 2 fold 1 starts
+Round 2 fold 2 starts
+Round 2 fold 3 starts
+Round 2 fold 4 starts
+Round 3 starts
+Round 3 fold 0 starts
+Round 3 fold 1 starts
+Round 3 fold 2 starts
+Round 3 fold 3 starts
+Round 3 fold 4 starts
+     avg_AUC    1-fold    2-fold    3-fold    4-fold    5-fold
+81  0.732774  0.705124  0.757817  0.691238  0.766181  0.743511
+     avg_PCC    1-fold    2-fold    3-fold    4-fold  5-fold
+81  0.655153  0.671447  0.657203  0.627025  0.651792  0.6683
+Prediction Mode: RandomStart Prediction
+Encode Method: blosum62
+hidden node: 82
+output filename: MHCpan-RandomStart
+
+Round 0 starts
+Round 0 fold 0 starts
+Round 0 fold 1 starts
+Round 0 fold 2 starts
+Round 0 fold 3 starts
+Round 0 fold 4 starts
+Round 1 starts
+Round 1 fold 0 starts
+Round 1 fold 1 starts
+Round 1 fold 2 starts
+Round 1 fold 3 starts
+Round 1 fold 4 starts
+Round 2 starts
+Round 2 fold 0 starts
+Round 2 fold 1 starts
+Round 2 fold 2 starts
+Round 2 fold 3 starts
+Round 2 fold 4 starts
+     avg_AUC    1-fold    2-fold    3-fold    4-fold    5-fold
+82  0.696907  0.682169  0.630335  0.733057  0.707383  0.731591
+     avg_PCC    1-fold    2-fold    3-fold    4-fold    5-fold
+82  0.631729  0.644782  0.615595  0.632647  0.600858  0.664762
+Prediction Mode: RandomStart Prediction
+Encode Method: blosum62
+hidden node: 83
+output filename: MHCpan-RandomStart
+
+Round 0 starts
+Round 0 fold 0 starts
+Round 0 fold 1 starts
+Round 0 fold 2 starts
+Round 0 fold 3 starts
+Round 0 fold 4 starts
+Round 1 starts
+Round 1 fold 0 starts
+Round 1 fold 1 starts
+Round 1 fold 2 starts
+Round 1 fold 3 starts
+Round 1 fold 4 starts
+Round 2 starts
+Round 2 fold 0 starts
+Round 2 fold 1 starts
+Round 2 fold 2 starts
+Round 2 fold 3 starts
+Round 2 fold 4 starts
+Round 3 starts
+Round 3 fold 0 starts
+Round 3 fold 1 starts
+Round 3 fold 2 starts
+Round 3 fold 3 starts
+Round 3 fold 4 starts
+Round 4 starts
+Round 4 fold 0 starts
+Round 4 fold 1 starts
+Round 4 fold 2 starts
+Round 4 fold 3 starts
+Round 4 fold 4 starts
+Round 5 starts
+Round 5 fold 0 starts
+Round 5 fold 1 starts
+Round 5 fold 2 starts
+Round 5 fold 3 starts
+Round 5 fold 4 starts
+     avg_AUC    1-fold    2-fold    3-fold    4-fold   5-fold
+83  0.747116  0.695117  0.745997  0.727813  0.794721  0.77193
+    avg_PCC   1-fold    2-fold    3-fold    4-fold    5-fold
+83  0.66824  0.65408  0.671475  0.677974  0.658776  0.678895
+Prediction Mode: RandomStart Prediction
+Encode Method: blosum62
+hidden node: 84
+output filename: MHCpan-RandomStart
+
+Round 0 starts
+Round 0 fold 0 starts
+Round 0 fold 1 starts
+Round 0 fold 2 starts
+Round 0 fold 3 starts
+Round 0 fold 4 starts
+Round 1 starts
+Round 1 fold 0 starts
+Round 1 fold 1 starts
+Round 1 fold 2 starts
+Round 1 fold 3 starts
+Round 1 fold 4 starts
+Round 2 starts
+Round 2 fold 0 starts
+Round 2 fold 1 starts
+Round 2 fold 2 starts
+Round 2 fold 3 starts
+Round 2 fold 4 starts
+Round 3 starts
+Round 3 fold 0 starts
+Round 3 fold 1 starts
+Round 3 fold 2 starts
+Round 3 fold 3 starts
+Round 3 fold 4 starts
+Round 4 starts
+Round 4 fold 0 starts
+Round 4 fold 1 starts
+Round 4 fold 2 starts
+Round 4 fold 3 starts
+Round 4 fold 4 starts
+     avg_AUC    1-fold    2-fold   3-fold    4-fold    5-fold
+84  0.726287  0.701126  0.698712  0.72644  0.708482  0.796677
+     avg_PCC    1-fold    2-fold    3-fold    4-fold    5-fold
+84  0.653023  0.620706  0.652761  0.661826  0.654991  0.674832
+Prediction Mode: RandomStart Prediction
+Encode Method: blosum62
+hidden node: 85
+output filename: MHCpan-RandomStart
+
+Round 0 starts
+Round 0 fold 0 starts
+Round 0 fold 1 starts
+Round 0 fold 2 starts
+Round 0 fold 3 starts
+Round 0 fold 4 starts
+Round 1 starts
+Round 1 fold 0 starts
+Round 1 fold 1 starts
+Round 1 fold 2 starts
+Round 1 fold 3 starts
+Round 1 fold 4 starts
+Round 2 starts
+Round 2 fold 0 starts
+Round 2 fold 1 starts
+Round 2 fold 2 starts
+Round 2 fold 3 starts
+Round 2 fold 4 starts
+Round 3 starts
+Round 3 fold 0 starts
+Round 3 fold 1 starts
+Round 3 fold 2 starts
+Round 3 fold 3 starts
+Round 3 fold 4 starts
+     avg_AUC    1-fold    2-fold    3-fold    4-fold    5-fold
+85  0.750299  0.743746  0.716818  0.767448  0.758871  0.764612
+    avg_PCC    1-fold    2-fold    3-fold    4-fold    5-fold
+85  0.67701  0.656907  0.684673  0.682492  0.678508  0.682469
+Prediction Mode: RandomStart Prediction
+Encode Method: blosum62
+hidden node: 86
+output filename: MHCpan-RandomStart
+
+Round 0 starts
+Round 0 fold 0 starts
+Round 0 fold 1 starts
+Round 0 fold 2 starts
+Round 0 fold 3 starts
+Round 0 fold 4 starts
+Round 1 starts
+Round 1 fold 0 starts
+Round 1 fold 1 starts
+Round 1 fold 2 starts
+Round 1 fold 3 starts
+Round 1 fold 4 starts
+Round 2 starts
+Round 2 fold 0 starts
+Round 2 fold 1 starts
+Round 2 fold 2 starts
+Round 2 fold 3 starts
+Round 2 fold 4 starts
+Round 3 starts
+Round 3 fold 0 starts
+Round 3 fold 1 starts
+Round 3 fold 2 starts
+Round 3 fold 3 starts
+Round 3 fold 4 starts
+Round 4 starts
+Round 4 fold 0 starts
+Round 4 fold 1 starts
+Round 4 fold 2 starts
+Round 4 fold 3 starts
+Round 4 fold 4 starts
+     avg_AUC    1-fold    2-fold    3-fold    4-fold    5-fold
+86  0.748862  0.751034  0.790381  0.729693  0.737239  0.735963
+     avg_PCC    1-fold    2-fold    3-fold    4-fold    5-fold
+86  0.674231  0.671015  0.685037  0.666917  0.673938  0.674246
+Prediction Mode: RandomStart Prediction
+Encode Method: blosum62
+hidden node: 87
+output filename: MHCpan-RandomStart
+
+Round 0 starts
+Round 0 fold 0 starts
+Round 0 fold 1 starts
+Round 0 fold 2 starts
+Round 0 fold 3 starts
+Round 0 fold 4 starts
+Round 1 starts
+Round 1 fold 0 starts
+Round 1 fold 1 starts
+Round 1 fold 2 starts
+Round 1 fold 3 starts
+Round 1 fold 4 starts
+     avg_AUC    1-fold    2-fold    3-fold    4-fold    5-fold
+87  0.735714  0.741731  0.767295  0.732277  0.714512  0.722755
+     avg_PCC    1-fold    2-fold    3-fold    4-fold    5-fold
+87  0.641026  0.604899  0.648217  0.640088  0.661417  0.650509
+Prediction Mode: RandomStart Prediction
+Encode Method: blosum62
+hidden node: 88
+output filename: MHCpan-RandomStart
+
+Round 0 starts
+Round 0 fold 0 starts
+Round 0 fold 1 starts
+Round 0 fold 2 starts
+Round 0 fold 3 starts
+Round 0 fold 4 starts
+Round 1 starts
+Round 1 fold 0 starts
+Round 1 fold 1 starts
+Round 1 fold 2 starts
+Round 1 fold 3 starts
+Round 1 fold 4 starts
+Round 2 starts
+Round 2 fold 0 starts
+Round 2 fold 1 starts
+Round 2 fold 2 starts
+Round 2 fold 3 starts
+Round 2 fold 4 starts
+Round 3 starts
+Round 3 fold 0 starts
+Round 3 fold 1 starts
+Round 3 fold 2 starts
+Round 3 fold 3 starts
+Round 3 fold 4 starts
+     avg_AUC    1-fold    2-fold    3-fold    4-fold    5-fold
+88  0.719105  0.761963  0.758489  0.673187  0.737563  0.664323
+     avg_PCC    1-fold    2-fold    3-fold    4-fold    5-fold
+88  0.647879  0.679832  0.671809  0.629367  0.614718  0.643671
+Prediction Mode: RandomStart Prediction
+Encode Method: blosum62
+hidden node: 89
+output filename: MHCpan-RandomStart
+
+Round 0 starts
+Round 0 fold 0 starts
+Round 0 fold 1 starts
+Round 0 fold 2 starts
+Round 0 fold 3 starts
+Round 0 fold 4 starts
+Round 1 starts
+Round 1 fold 0 starts
+Round 1 fold 1 starts
+Round 1 fold 2 starts
+Round 1 fold 3 starts
+Round 1 fold 4 starts
+Round 2 starts
+Round 2 fold 0 starts
+Round 2 fold 1 starts
+Round 2 fold 2 starts
+Round 2 fold 3 starts
+Round 2 fold 4 starts
+Round 3 starts
+Round 3 fold 0 starts
+Round 3 fold 1 starts
+Round 3 fold 2 starts
+Round 3 fold 3 starts
+Round 3 fold 4 starts
+Round 4 starts
+Round 4 fold 0 starts
+Round 4 fold 1 starts
+Round 4 fold 2 starts
+Round 4 fold 3 starts
+Round 4 fold 4 starts
+Round 5 starts
+Round 5 fold 0 starts
+Round 5 fold 1 starts
+Round 5 fold 2 starts
+Round 5 fold 3 starts
+Round 5 fold 4 starts
+     avg_AUC    1-fold   2-fold    3-fold   4-fold   5-fold
+89  0.733907  0.643128  0.75259  0.734385  0.76337  0.77606
+     avg_PCC    1-fold    2-fold    3-fold    4-fold    5-fold
+89  0.655455  0.544233  0.685551  0.680238  0.683208  0.684043
+Prediction Mode: RandomStart Prediction
+Encode Method: blosum62
+hidden node: 90
+output filename: MHCpan-RandomStart
+
+Round 0 starts
+Round 0 fold 0 starts
+Round 0 fold 1 starts
+Round 0 fold 2 starts
+Round 0 fold 3 starts
+Round 0 fold 4 starts
+Round 1 starts
+Round 1 fold 0 starts
+Round 1 fold 1 starts
+Round 1 fold 2 starts
+Round 1 fold 3 starts
+Round 1 fold 4 starts
+Round 2 starts
+Round 2 fold 0 starts
+Round 2 fold 1 starts
+Round 2 fold 2 starts
+Round 2 fold 3 starts
+Round 2 fold 4 starts
+     avg_AUC    1-fold    2-fold    3-fold    4-fold    5-fold
+90  0.740927  0.763443  0.697785  0.712564  0.759499  0.771342
+     avg_PCC    1-fold    2-fold    3-fold    4-fold    5-fold
+90  0.659133  0.658571  0.649227  0.659474  0.667239  0.661152

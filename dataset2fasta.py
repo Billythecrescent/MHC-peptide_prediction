@@ -21,10 +21,6 @@ def dataset2fasta(dataset, filePath):
     True
     '''
     f = open(filePath,'w')
-    # peptides = dataset.peptide
-    # alleles = dataset.allele
-    # datapair = dict(zip(alleles,peptides)) 
-    # print(datapair)
     for index, sample in dataset.iterrows():
         # print(sample['allele'])
         # print(sample['peptide'])
@@ -40,9 +36,17 @@ def dataset2fasta(dataset, filePath):
 # dataset2fasta(evalset, filename)
 # print(evalset)
 
-allele = "Patr-A*0101"
-aw = re.sub('[*:]','_',allele)
-filepath = os.path.join(data_path, "modified_mhc.20130222.csv")
-df = pd.read_csv(filepath)
-allele_dataset = df.loc[df['allele'] == allele]
-dataset2fasta(allele_dataset, os.path.join(module_path, aw + "_" + "modified_mhc.20130222.fasta"))
+
+def main():
+    filepath = os.path.join(data_path, "VACV_evaluation_dataset.csv")
+    df = pd.read_csv(filepath)
+    alleles = df.allele.unique().tolist()
+    print(alleles)
+    for allele in alleles:
+        aw = re.sub('[*:]','_',allele)
+        allele_dataset = df.loc[df['allele'] == allele]
+        outputPath = os.path.join(module_path, aw + "_" + "VACV_evaluation_dataset.fasta")
+        print(outputPath)
+        dataset2fasta(allele_dataset, outputPath)
+
+main()

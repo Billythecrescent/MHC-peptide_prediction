@@ -235,9 +235,9 @@ def RandomStartPredictor(dataset, allele, blosum_encode, hidden_node):
     #X is encoded below
 
     ##cross_validation not done
-    PreCirNum = 20
-    fauc = os.path.join(current_path, "randomStart_roc_auc.csv")
-    fr = os.path.join(current_path, "randomStart_pearson.csv")
+    PreCirNum = 10
+    fauc = os.path.join(current_path, "allmer_randomStart_roc_auc.csv")
+    fr = os.path.join(current_path, "allmer_randomStart_pearson.csv")
     avg_auc_list = []
     avg_r_list = []
     for i in range(PreCirNum):
@@ -256,15 +256,22 @@ def RandomStartPredictor(dataset, allele, blosum_encode, hidden_node):
             r = PF.pearson_score(y[test], scores)
             auc_list.append(auc)
             r_list.append(r)
-        print("allele %s round %d aucs: %s" %(allele, i, str(auc_list)))
-        print("allele %s round %d rs: %s" %(allele, i, str(r_list)))
+
         avg_auc = np.mean(auc_list)
-        avg_auc_list.append(avg_auc)
         avg_r = np.mean(r_list)
-        avg_r_list.append(avg_r)
+        if len(avg_auc_list) > 0 and avg_auc < 0.99*avg_auc_list[-1][0]:
+            break
+        avg_auc_list.append(np.array([avg_auc]+auc_list))
+        avg_r_list.append(np.array([avg_r]+r_list))
+
+    avg_auc_list = np.array(avg_auc_list)
+    avg_r_list = np.array(avg_r_list)
+
+    # print(avg_auc_list)
+    # print(avg_r_list)
     
-    auc_df = pd.DataFrame(np.array(avg_auc_list).reshape(1, -1), columns = [str(i)+"-round" for i in range(1, PreCirNum+1)], index=[allele])
-    r_df = pd.DataFrame(np.array(avg_r_list).reshape(1, -1), columns = [str(i)+"-round" for i in range(1, PreCirNum+1)], index=[allele])
+    auc_df = pd.DataFrame(np.array(avg_auc_list[-1]).reshape(1,-1), columns = ['avg_AUC']+[str(i)+"-fold" for i in range(1, 6)], index=[str(hidden_node)])
+    r_df = pd.DataFrame(np.array(avg_r_list[-1]).reshape(1,-1), columns = ['avg_PCC']+[str(i)+"-fold" for i in range(1, 6)], index=[str(hidden_node)])
     print(auc_df)
     print(r_df)
 
@@ -322,13 +329,13 @@ def ExistStartPredictor(dataset, allele, blosum_encode, hidden_node):
     #X is encoded below
 
     ##cross_validation
-    PreCirNum = 20
-    fauc = os.path.join(current_path, "ExistStart_roc_auc.csv")
-    fr = os.path.join(current_path, "ExistStart_pearson.csv")
+    PreCirNum = 10
+    fauc = os.path.join(current_path, "allmer_ExistStart_roc_auc.csv")
+    fr = os.path.join(current_path, "allmer_ExistStart_pearson.csv")
     avg_auc_list = []
     avg_r_list = []
     for i in range(PreCirNum):
-        print("allele %s round %d starts" % (allele, i))
+        print("Round %d starts" % i)
         auc_list = []
         r_list = []
         ##encode the peptide
@@ -346,18 +353,22 @@ def ExistStartPredictor(dataset, allele, blosum_encode, hidden_node):
             auc_list.append(auc)
             r = PF.pearson_score(y[test], scores)
             r_list.append(r)
-        print("allele %s round %d aucs: %s" %(allele, i, str(auc_list)))
-        print("allele %s round %d rs: %s" %(allele, i, str(r_list)))
-        ###
-        #可以考虑设置一个下降制动，当score下降超过某个比例的时候，停止训练，返回上一个值作为预测结果
-        ###
-        avg_auc = np.mean(auc_list)
-        avg_auc_list.append(avg_auc)
-        avg_r = np.mean(r_list)
-        avg_r_list.append(avg_r)
 
-    auc_df = pd.DataFrame(np.array(avg_auc_list).reshape(1, -1), columns = [str(i)+"-round" for i in range(1, PreCirNum+1)], index=[allele])
-    r_df = pd.DataFrame(np.array(avg_r_list).reshape(1, -1), columns = [str(i)+"-round" for i in range(1, PreCirNum+1)], index=[allele])
+        avg_auc = np.mean(auc_list)
+        avg_r = np.mean(r_list)
+        if len(avg_auc_list) > 0 and avg_auc < 0.995*avg_auc_list[-1][0]:
+            break
+        avg_auc_list.append(np.array([avg_auc]+auc_list))
+        avg_r_list.append(np.array([avg_r]+r_list))
+
+    avg_auc_list = np.array(avg_auc_list)
+    avg_r_list = np.array(avg_r_list)
+
+    # print(avg_auc_list)
+    # print(avg_r_list)
+    
+    auc_df = pd.DataFrame(np.array(avg_auc_list[-1]).reshape(1,-1), columns = ['avg_AUC']+[str(i)+"-fold" for i in range(1, 6)], index=[str(hidden_node)])
+    r_df = pd.DataFrame(np.array(avg_r_list[-1]).reshape(1,-1), columns = ['avg_PCC']+[str(i)+"-fold" for i in range(1, 6)], index=[str(hidden_node)])
     print(auc_df)
     print(r_df)
 
@@ -365,6 +376,7 @@ def ExistStartPredictor(dataset, allele, blosum_encode, hidden_node):
     # r_df.to_csv(fr)
     
     return reg, auc_df, r_df
+
 
 def test_ExistStart():
     allele = "H-2-Kb"
@@ -432,34 +444,31 @@ def BuildPredictor(dataset, hidden_node, ifRandomStart, score_filename):
 
 
     path = os.path.join(model_path, "allmer")
-    alleles_auc = []
-    alleles_PCC = []
+    
     for allele in alleles:
         ##cross validation, determing the training and testing data
         #Here I need to get the score
         allele_dataset = dataset.loc[dataset['allele'] == allele]
         reg, auc_df, r_df= allmerPredictor(allele_dataset, allele, blosum_encode, hidden_node, ifRandomStart)
+        
         auc_df.to_csv(os.path.join(current_path, score_filename + "_auc.csv"), mode='a', header=False)
         r_df.to_csv(os.path.join(current_path, score_filename + "_PCC.csv"), mode='a', header=False)
-        alleles_auc.append(auc_df)
-        alleles_PCC.append(r_df)
+        
         # aw = re.sub('[*:]','_',allele)
-        # fname = os.path.join(os.path.join(path, startType), aw +'.joblib')
+        # fname = os.path.join(os.path.join(path, StartType), aw +'.joblib')
         # if reg is not None:
         #     joblib.dump(reg, fname, protocol=2)
-        #     print("%s fitting of allele %s is done" %(startType, allele))
-    alleles_auc_df = pd.DataFrame(np.array(alleles_auc).reshape(1,-1))
-    alleles_auc_df.to_csv(os.path.join(current_path, score_filename + "_complete_auc.csv"))
-    alleles_PCC_df = pd.DataFrame(np.array(alleles_PCC).reshape(1,-1))
-    alleles_PCC_df.to_csv(os.path.join(current_path, score_filename + "_complete_PCC.csv"))
+        #     print("%s fitting of allele %s is done" %(StartType, allele))
 
 def main():
     t0 = time()
 
-    data_path = os.path.join(data_path, "modified_mhc.20130222.csv")
-    dataset = pd.read_csv(data_path)
-    hidden_node = 5
-    BuildPredictor(dataset, hidden_node, False, "AllmerPredictionResult")
-
+    path = os.path.join(data_path, "modified_mhc.20130222.csv")
+    dataset = pd.read_csv(path)
+    for i in range(7, 11):
+        BuildPredictor(dataset, i, False, "AllmerPredictionResult")
+    
     t1 = time()
     print ("Elapsed time (m):", (t1-t0)/60)
+
+main()
