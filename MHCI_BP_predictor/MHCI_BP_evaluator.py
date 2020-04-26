@@ -47,10 +47,10 @@ def predict_non9mer(allele, seq):
 
     seq_list = []
     seqLen = len(seq)
-    if seqLen == 8:
+    if seqLen < 9:
         #turn 8mer to 9mer
-        for i in range(5):
-            seq_list.append(seq[:(i+3)]+'X'+seq[(i+3):])
+        for i in range(seqLen-3):
+            seq_list.append(seq[:(i+3)]+'X'*(9-seqLen)+seq[(i+3):])
 
     elif seqLen >= 10:
         bulg = seqLen - 9
@@ -90,7 +90,7 @@ def test_predict_non9mer():
     # print(dataset)
     dataset.peptide.apply(lambda x: predict_non9mer(allele, x))
 
-    # print(predict_non9mer("HLA-A*01:01", "AQFSPQYL"))
+    # print(predict_non9mer("HLA-A*01:01", "AQFSPQ"))
     # print(predict_non9mer("HLA-A*01:01", "YSLEYFQFVKK"))
     # print(predict_non9mer('HLA-A*01:01', "ABCDEABCDEABCDEABCDEABCDEABCDE"))
 
@@ -149,5 +149,69 @@ def get_evaluation_by_allele():
         t1 = time()
         print("%s is done, run in Elapsed time %d(m)" %(allele, (t1-t0)/60))
         
-get_evaluation_by_allele()
-    
+# get_evaluation_by_allele()
+
+def mhci1_predictPeptide(dataset, outputFile=None):
+    dataset = pd.DataFrame(dataset.query('length > 7 and length < 12'))
+    alleles = dataset.allele.unique().tolist()
+    df_list = []
+    print(dataset)
+    for allele in alleles:
+        allele_dataset = dataset.loc[dataset['allele'] == allele]
+        for length in (8, 9, 10, 11):
+            data = allele_dataset.loc[allele_dataset['length'] == length]
+            reg = PF.find_model(allele, length)
+            X = data.peptide.apply(lambda x: pd.Series(blosum_encode(x)),1)
+            scores = pd.DataFrame(reg.predict(X), columns=['MHCi1_log50k'], index=data.index)
+            result = pd.concat([data, scores], axis=1)
+            df_list.append(result)
+    combined_df = pd.concat(df_list, axis=0, sort=True)
+    combined_df.sort_index(inplace=True)
+    print(combined_df)
+
+    if outputFile != None:
+        combined_df.to_csv(outputFile)
+
+def test_mhci1_predictPeptide():
+    path = os.path.join(data_path, "VACV_evaluation_dataset.csv")
+    dataset = pd.read_csv(path)
+    mhci1_predictPeptide(dataset, os.path.join(current_path, "mhci1_VACV_result.csv"))
+
+# test_mhci1_predictPeptide()
+
+def mhci2_predictPeptide(dataset, outputFile=None):
+    alleles = dataset.allele.unique().tolist()
+    df_list = []
+    # print(dataset)
+    for allele in alleles:
+        allele_dataset = dataset.loc[dataset['allele'] == allele]
+        data_9mer = allele_dataset.loc[allele_dataset['length'] == 9]
+        data_non9mer = allele_dataset.loc[allele_dataset['length'] != 9]
+        
+        reg = PF.find_model(allele, 9)
+        X = data_9mer.peptide.apply(lambda x: pd.Series(blosum_encode(x)),1)
+        data_9mer_scores = pd.DataFrame(reg.predict(X), columns=['MHCi2_log50k'], index=data_9mer.index)
+        data_non9mer_scores = data_non9mer.peptide.apply(lambda x: predict_non9mer(allele, x))
+        data_non9mer_scores = data_non9mer_scores.to_frame()
+        data_non9mer_scores.columns = ['MHCi2_log50k']
+        
+        result_9mer = pd.concat([data_9mer, data_9mer_scores], axis=1)
+        result_non9mer = pd.concat([data_non9mer, data_non9mer_scores], axis=1)
+        # print(result_9mer)
+        # print(result_non9mer)
+        df_list.append(result_9mer)
+        df_list.append(result_non9mer)    
+
+    combined_df = pd.concat(df_list, axis=0, sort=True)
+    combined_df.sort_index(inplace=True)
+    print(combined_df)
+
+    if outputFile != None:
+        combined_df.to_csv(outputFile)
+
+def test_mhci2_predictPeptide():
+    path = os.path.join(data_path, "VACV_evaluation_dataset.csv")
+    dataset = pd.read_csv(path)
+    mhci2_predictPeptide(dataset, os.path.join(current_path, "mhci2_VACV_result.csv"))
+
+# test_mhci2_predictPeptide()
