@@ -1,0 +1,328 @@
+species,allele,length,source,peptide,binder
+Homo sapiens,HLA-A*11:01,9,natural,CILGKLFTK,1
+Homo sapiens,HLA-A*02:01,10,natural,FIASNGVKLV,1
+Homo sapiens,HLA-B*35:01,9,natural,FPSDSWCYF,1
+Homo sapiens,HLA-A*11:01,9,natural,AVCPWTWLR,1
+Homo sapiens,HLA-A*02:01,9,natural,ILDKVLVHL,1
+Homo sapiens,HLA-A*02:01,9,natural,GLFGDIYLA,1
+Homo sapiens,HLA-A*03:01,10,natural,KILDAVVAQK,1
+Homo sapiens,HLA-A*68:01,9,natural,ETVSEQSNV,1
+Homo sapiens,HLA-A*02:01,10,natural,SLADEAEVYL,1
+Homo sapiens,HLA-A*01:01,9,natural,YTDFHCQYV,1
+Homo sapiens,HLA-A*02:01,10,natural,ACDPHSGHFV,1
+Homo sapiens,HLA-A*03:01,10,natural,TLDWLLQTPK,1
+Homo sapiens,HLA-A*24:02,9,natural,SYLDSGIHF,1
+Homo sapiens,HLA-A*02:01,9,natural,ILNAMIAKI,1
+Homo sapiens,HLA-A*02:01,10,natural,SLFEGIDIYT,1
+Homo sapiens,HLA-A*11:01,9,natural,KTLTSVFQK,1
+Homo sapiens,HLA-A*02:01,9,natural,FLDEFMEGV,1
+Homo sapiens,HLA-B*44:02,9,natural,AEPINIQTW,1
+Homo sapiens,HLA-B*44:02,9,natural,EEKLIVVLF,1
+Homo sapiens,HLA-B*44:02,11,natural,SELFRSGLDSY,1
+Homo sapiens,HLA-C*06:02,9,natural,FRSGLDSYV,1
+Homo sapiens,HLA-A*68:01,9,natural,EAFIQPITR,1
+Homo sapiens,HLA-A*01:01,11,natural,FLEGNEVGKTY,1
+Homo sapiens,HLA-B*44:02,9,natural,KELEGILLL,1
+Homo sapiens,HLA-C*14:02,8,natural,CYMEAVAL,1
+Homo sapiens,HLA-B*07:02,9,natural,RPHVPESAF,1
+Homo sapiens,HLA-A*01:01,10,natural,ILDTAGREEY,1
+Homo sapiens,HLA-A*03:01,9,natural,KIFSEVTLK,1
+Homo sapiens,HLA-B*38:01,9,natural,SHETVIIEL,1
+Homo sapiens,HLA-B*08:01,9,natural,GFKQSSKAL,1
+Homo sapiens,HLA-A*03:01,9,natural,KINKNPKYK,1
+Homo sapiens,HLA-A*02:01,9,natural,SSKALQRPV,1
+Homo sapiens,HLA-A*02:01,9,natural,RIAECILGM,1
+Homo sapiens,HLA-A*02:01,9,natural,FLIIWQNTM,1
+Homo sapiens,HLA-A*02:01,9,natural,FLIIWQNTM,1
+Homo sapiens,HLA-A*02:01,9,natural,FLIIWQNTM,1
+Homo sapiens,HLA-A*01:01,10,natural,YVDFREYEYY,1
+Homo sapiens,HLA-A*02:01,10,natural,SLYKFSPFPL,1
+Homo sapiens,HLA-A*02:01,9,natural,VVMSWAPPV,1
+Homo sapiens,HLA-A*02:01,9,natural,VVPCEPPEV,1
+Homo sapiens,HLA-A*02:01,10,natural,LLLDDLLVSI,1
+Homo sapiens,HLA-B*35:01,9,natural,VVVGAVGVG,1
+Homo sapiens,HLA-B*07:02,10,natural,QRPYGYDQIM,1
+Homo sapiens,HLA-A*02:01,9,natural,RLSSCVPVA,1
+Homo sapiens,HLA-C*08:02,9,natural,GADGVGKSA,1
+Homo sapiens,HLA-C*08:02,10,natural,GADGVGKSAL,1
+Homo sapiens,HLA-A*02:01,9,natural,VVPCEPPEV,1
+random,HLA-A*11:01,8,artificial,AVLHAQQA,0
+random,HLA-A*11:01,8,artificial,PGARHKPF,0
+random,HLA-A*11:01,8,artificial,APVVALRR,0
+random,HLA-A*11:01,8,artificial,EGNAGRVG,0
+random,HLA-A*11:01,8,artificial,SRGGLALR,0
+random,HLA-A*11:01,9,artificial,ALDTYVVTP,0
+random,HLA-A*11:01,9,artificial,RPAYAVLLG,0
+random,HLA-A*11:01,9,artificial,TADSVKAIQ,0
+random,HLA-A*11:01,9,artificial,SSLATPGAE,0
+random,HLA-A*11:01,9,artificial,ALESETGPT,0
+random,HLA-A*11:01,10,artificial,NGGFSGDMPN,0
+random,HLA-A*11:01,10,artificial,WQKQKRSRVH,0
+random,HLA-A*11:01,10,artificial,VAAAAAAGLP,0
+random,HLA-A*11:01,10,artificial,KEGRAYVAHL,0
+random,HLA-A*11:01,10,artificial,AGGVSSLHDS,0
+random,HLA-A*11:01,11,artificial,ADDSTVIVGRV,0
+random,HLA-A*11:01,11,artificial,PVGPLVKARRL,0
+random,HLA-A*11:01,11,artificial,AQLPPVPAEST,0
+random,HLA-A*11:01,11,artificial,AAARRTGHVAL,0
+random,HLA-A*11:01,11,artificial,TYRVALLRARY,0
+random,HLA-A*02:01,8,artificial,RLITVLGF,0
+random,HLA-A*02:01,8,artificial,AGKAHVRW,0
+random,HLA-A*02:01,8,artificial,SVVLSRGV,0
+random,HLA-A*02:01,8,artificial,PAAGPAAR,0
+random,HLA-A*02:01,8,artificial,ALDETARL,0
+random,HLA-A*02:01,9,artificial,YGSFAVVLL,0
+random,HLA-A*02:01,9,artificial,LPLGLADVA,0
+random,HLA-A*02:01,9,artificial,DATLRILLN,0
+random,HLA-A*02:01,9,artificial,TLALGHRAL,0
+random,HLA-A*02:01,9,artificial,VAREPTASA,0
+random,HLA-A*02:01,10,artificial,HTVDGQRQAV,0
+random,HLA-A*02:01,10,artificial,TWPDVLGQVR,0
+random,HLA-A*02:01,10,artificial,PGAARAVFPD,0
+random,HLA-A*02:01,10,artificial,FSDLMLAGAT,0
+random,HLA-A*02:01,10,artificial,GVTLDGPPTH,0
+random,HLA-A*02:01,11,artificial,RRAAALHDTER,0
+random,HLA-A*02:01,11,artificial,RWKSGLVGLVT,0
+random,HLA-A*02:01,11,artificial,RGDFQDGKLGE,0
+random,HLA-A*02:01,11,artificial,VRVSKGPTSAV,0
+random,HLA-A*02:01,11,artificial,IREAAVLDALV,0
+random,HLA-B*35:01,8,artificial,VMATTVVG,0
+random,HLA-B*35:01,8,artificial,GAFGLFEI,0
+random,HLA-B*35:01,8,artificial,SDRKAAAR,0
+random,HLA-B*35:01,8,artificial,AVLSVNSD,0
+random,HLA-B*35:01,8,artificial,QTRQDAGA,0
+random,HLA-B*35:01,9,artificial,GRLFEPGGV,0
+random,HLA-B*35:01,9,artificial,EDINPAYRA,0
+random,HLA-B*35:01,9,artificial,NALVVRVGL,0
+random,HLA-B*35:01,9,artificial,RAELSPADL,0
+random,HLA-B*35:01,9,artificial,IRVLRSREA,0
+random,HLA-B*35:01,10,artificial,GASERDTIIG,0
+random,HLA-B*35:01,10,artificial,LPGAGAPDRV,0
+random,HLA-B*35:01,10,artificial,ADNGRAGVAI,0
+random,HLA-B*35:01,10,artificial,AHGGYDGVTV,0
+random,HLA-B*35:01,10,artificial,RVIEDAWRVD,0
+random,HLA-B*35:01,11,artificial,FDWQLKTAIYL,0
+random,HLA-B*35:01,11,artificial,GADDDRLFDFA,0
+random,HLA-B*35:01,11,artificial,APPTLPELECK,0
+random,HLA-B*35:01,11,artificial,DSIDYPAAILP,0
+random,HLA-B*35:01,11,artificial,AARAEYGVDRI,0
+random,HLA-A*03:01,8,artificial,SKAAGDAE,0
+random,HLA-A*03:01,8,artificial,ARPSHGFP,0
+random,HLA-A*03:01,8,artificial,FTQLARVD,0
+random,HLA-A*03:01,8,artificial,ADAQWREV,0
+random,HLA-A*03:01,8,artificial,TIGDVLRE,0
+random,HLA-A*03:01,9,artificial,FGLTYIYAP,0
+random,HLA-A*03:01,9,artificial,AVHPARDHP,0
+random,HLA-A*03:01,9,artificial,GDGVSTPSG,0
+random,HLA-A*03:01,9,artificial,RDHNREDKT,0
+random,HLA-A*03:01,9,artificial,LEVLSHTRM,0
+random,HLA-A*03:01,10,artificial,GATLNYALGA,0
+random,HLA-A*03:01,10,artificial,YWRAALLKLG,0
+random,HLA-A*03:01,10,artificial,GIPPGLFDDR,0
+random,HLA-A*03:01,10,artificial,PPSYAEPERR,0
+random,HLA-A*03:01,10,artificial,ETELAIELAR,0
+random,HLA-A*03:01,11,artificial,AAWLGTDLDDK,0
+random,HLA-A*03:01,11,artificial,IQVWAEPLLDD,0
+random,HLA-A*03:01,11,artificial,LLESVTTATGW,0
+random,HLA-A*03:01,11,artificial,GATRLLPLLTR,0
+random,HLA-A*03:01,11,artificial,GDAVDPAVVSR,0
+random,HLA-A*68:01,8,artificial,TKGLPLSA,0
+random,HLA-A*68:01,8,artificial,AGREVTKA,0
+random,HLA-A*68:01,8,artificial,LAEVLELD,0
+random,HLA-A*68:01,8,artificial,ETRDAVDG,0
+random,HLA-A*68:01,8,artificial,ERRGLSKD,0
+random,HLA-A*68:01,9,artificial,KVSPALGNA,0
+random,HLA-A*68:01,9,artificial,SDRLTTRVP,0
+random,HLA-A*68:01,9,artificial,VKHKASAGL,0
+random,HLA-A*68:01,9,artificial,RGLGTSTVA,0
+random,HLA-A*68:01,9,artificial,PRWLVRTST,0
+random,HLA-A*68:01,10,artificial,DQRGILTLIG,0
+random,HLA-A*68:01,10,artificial,DSVAEMKNGS,0
+random,HLA-A*68:01,10,artificial,FALELPKGAE,0
+random,HLA-A*68:01,10,artificial,VVDAATPRAR,0
+random,HLA-A*68:01,10,artificial,YPSRVLLSEV,0
+random,HLA-A*68:01,11,artificial,MLVPPLGLVLV,0
+random,HLA-A*68:01,11,artificial,WLRRSQILRLF,0
+random,HLA-A*68:01,11,artificial,PVGPGTAESNT,0
+random,HLA-A*68:01,11,artificial,ESTRPDGVLLS,0
+random,HLA-A*68:01,11,artificial,PEYLWFIKVTT,0
+random,HLA-A*01:01,8,artificial,KIWIALVG,0
+random,HLA-A*01:01,8,artificial,KPGAAVFK,0
+random,HLA-A*01:01,8,artificial,HGVADSDM,0
+random,HLA-A*01:01,8,artificial,NLREPTHA,0
+random,HLA-A*01:01,8,artificial,GDQCCLDP,0
+random,HLA-A*01:01,9,artificial,EWAGLFHHQ,0
+random,HLA-A*01:01,9,artificial,PLGRGKRLD,0
+random,HLA-A*01:01,9,artificial,GQHHAQEAG,0
+random,HLA-A*01:01,9,artificial,AFTRGPALL,0
+random,HLA-A*01:01,9,artificial,FAVYNSGGG,0
+random,HLA-A*01:01,10,artificial,TRRLGALAIG,0
+random,HLA-A*01:01,10,artificial,RMMSGARDGT,0
+random,HLA-A*01:01,10,artificial,TRHFNNRPMA,0
+random,HLA-A*01:01,10,artificial,ILTAADASTD,0
+random,HLA-A*01:01,10,artificial,DTTASHGAMH,0
+random,HLA-A*01:01,11,artificial,LAQSGAPADSL,0
+random,HLA-A*01:01,11,artificial,TAAEQFAMVDA,0
+random,HLA-A*01:01,11,artificial,LTWRTRVRMVS,0
+random,HLA-A*01:01,11,artificial,PDERALRRSSG,0
+random,HLA-A*01:01,11,artificial,VAVGASSIDRA,0
+random,HLA-A*24:02,8,artificial,IDAQRHRP,0
+random,HLA-A*24:02,8,artificial,EVCADLDT,0
+random,HLA-A*24:02,8,artificial,GLGGEDNS,0
+random,HLA-A*24:02,8,artificial,ALPDTSTG,0
+random,HLA-A*24:02,8,artificial,HRELVTYL,0
+random,HLA-A*24:02,9,artificial,ELADHQSTR,0
+random,HLA-A*24:02,9,artificial,APVKNWLTR,0
+random,HLA-A*24:02,9,artificial,VTYSGAKAP,0
+random,HLA-A*24:02,9,artificial,TAEAPFMDA,0
+random,HLA-A*24:02,9,artificial,GETLEARNG,0
+random,HLA-A*24:02,10,artificial,EAWGRGYDRI,0
+random,HLA-A*24:02,10,artificial,VIPFTISSAA,0
+random,HLA-A*24:02,10,artificial,VVQVGRKVII,0
+random,HLA-A*24:02,10,artificial,QLGQSDGELI,0
+random,HLA-A*24:02,10,artificial,RFPVHNPRED,0
+random,HLA-A*24:02,11,artificial,ARERVGEVQAN,0
+random,HLA-A*24:02,11,artificial,RLVHDDRGGHR,0
+random,HLA-A*24:02,11,artificial,GYGLSILIETV,0
+random,HLA-A*24:02,11,artificial,RGNYRERELSD,0
+random,HLA-A*24:02,11,artificial,PSPHAWDHGLV,0
+random,HLA-B*44:02,8,artificial,GDLRAVLE,0
+random,HLA-B*44:02,8,artificial,WEQSRQAA,0
+random,HLA-B*44:02,8,artificial,TSAAPVAL,0
+random,HLA-B*44:02,8,artificial,ELDEAGRS,0
+random,HLA-B*44:02,8,artificial,PEAMAVVG,0
+random,HLA-B*44:02,9,artificial,CPDEAGRVA,0
+random,HLA-B*44:02,9,artificial,QWLAAAART,0
+random,HLA-B*44:02,9,artificial,ALDRRGTET,0
+random,HLA-B*44:02,9,artificial,DMLDAQKTE,0
+random,HLA-B*44:02,9,artificial,IFLTTYVRP,0
+random,HLA-B*44:02,10,artificial,VTGILNRYGA,0
+random,HLA-B*44:02,10,artificial,LTDQEAPSDP,0
+random,HLA-B*44:02,10,artificial,IVAGRVEVAH,0
+random,HLA-B*44:02,10,artificial,EKGPHQATVR,0
+random,HLA-B*44:02,10,artificial,DRPRCLVHGG,0
+random,HLA-B*44:02,11,artificial,IPVAHSAIGRL,0
+random,HLA-B*44:02,11,artificial,GRARATLELLR,0
+random,HLA-B*44:02,11,artificial,ADTLFTLEYEV,0
+random,HLA-B*44:02,11,artificial,EPTARLRTLRK,0
+random,HLA-B*44:02,11,artificial,GAALDDEDLAV,0
+random,HLA-C*06:02,8,artificial,RSLMDVLA,0
+random,HLA-C*06:02,8,artificial,SASVVSYM,0
+random,HLA-C*06:02,8,artificial,IAKHDANM,0
+random,HLA-C*06:02,8,artificial,DHKTASTE,0
+random,HLA-C*06:02,8,artificial,RLSGLAGK,0
+random,HLA-C*06:02,9,artificial,EYGGHVFDA,0
+random,HLA-C*06:02,9,artificial,GERDIRAQD,0
+random,HLA-C*06:02,9,artificial,LLQGEVRIY,0
+random,HLA-C*06:02,9,artificial,NIRVHAGEQ,0
+random,HLA-C*06:02,9,artificial,PRRTAAGYT,0
+random,HLA-C*06:02,10,artificial,HVFPQHASTS,0
+random,HLA-C*06:02,10,artificial,MEATVGVFEA,0
+random,HLA-C*06:02,10,artificial,SAVCLPARNT,0
+random,HLA-C*06:02,10,artificial,PFIGFKDFGM,0
+random,HLA-C*06:02,10,artificial,RLRYPWGGAS,0
+random,HLA-C*06:02,11,artificial,EGYVAERLLAE,0
+random,HLA-C*06:02,11,artificial,DFFGDLRDNNL,0
+random,HLA-C*06:02,11,artificial,RAAELDAIGDA,0
+random,HLA-C*06:02,11,artificial,TVGFGPRPVEV,0
+random,HLA-C*06:02,11,artificial,AAHMAGEVIEA,0
+random,HLA-C*14:02,8,artificial,VPTMIREL,0
+random,HLA-C*14:02,8,artificial,AKPLTSEP,0
+random,HLA-C*14:02,8,artificial,APSRDSPA,0
+random,HLA-C*14:02,8,artificial,FPVVPPPF,0
+random,HLA-C*14:02,8,artificial,TVHPYRLT,0
+random,HLA-C*14:02,9,artificial,ADGDNRDRR,0
+random,HLA-C*14:02,9,artificial,DRYVLLATS,0
+random,HLA-C*14:02,9,artificial,GFAGLHMAA,0
+random,HLA-C*14:02,9,artificial,LPFQETALK,0
+random,HLA-C*14:02,9,artificial,SRGALAVAA,0
+random,HLA-C*14:02,10,artificial,ETVAGQVRED,0
+random,HLA-C*14:02,10,artificial,RRYAQWAELT,0
+random,HLA-C*14:02,10,artificial,IRPSDRGVIS,0
+random,HLA-C*14:02,10,artificial,IRVEHDLNRR,0
+random,HLA-C*14:02,10,artificial,LVPRKGRKPR,0
+random,HLA-C*14:02,11,artificial,GSRAAMAAFAL,0
+random,HLA-C*14:02,11,artificial,RIDFSAANVKV,0
+random,HLA-C*14:02,11,artificial,KVQYVFFTVED,0
+random,HLA-C*14:02,11,artificial,RAKEAPFTTIP,0
+random,HLA-C*14:02,11,artificial,EPMDTNLTPSL,0
+random,HLA-B*07:02,8,artificial,SYHPGYQN,0
+random,HLA-B*07:02,8,artificial,PNIRLNRL,0
+random,HLA-B*07:02,8,artificial,VRPASPTH,0
+random,HLA-B*07:02,8,artificial,ESVYRVRA,0
+random,HLA-B*07:02,8,artificial,DADAWVFR,0
+random,HLA-B*07:02,9,artificial,ARFYRAEVR,0
+random,HLA-B*07:02,9,artificial,RQQLAAATT,0
+random,HLA-B*07:02,9,artificial,SELTGLVDK,0
+random,HLA-B*07:02,9,artificial,DPAGSRWVA,0
+random,HLA-B*07:02,9,artificial,SVLHDPRGA,0
+random,HLA-B*07:02,10,artificial,DACIGVDGPA,0
+random,HLA-B*07:02,10,artificial,YAALAAERRL,0
+random,HLA-B*07:02,10,artificial,GGAAAMEPHP,0
+random,HLA-B*07:02,10,artificial,AVDTPAALGP,0
+random,HLA-B*07:02,10,artificial,VVGKDDLSPG,0
+random,HLA-B*07:02,11,artificial,GPAPKRAIPGK,0
+random,HLA-B*07:02,11,artificial,TALGGLDTNKV,0
+random,HLA-B*07:02,11,artificial,RNLVNTTGAGD,0
+random,HLA-B*07:02,11,artificial,QFAFRAEAPKG,0
+random,HLA-B*07:02,11,artificial,APERAGEGESE,0
+random,HLA-B*38:01,8,artificial,EVGRASSG,0
+random,HLA-B*38:01,8,artificial,TFEGDRTD,0
+random,HLA-B*38:01,8,artificial,AHETHRFT,0
+random,HLA-B*38:01,8,artificial,GIEFGQVY,0
+random,HLA-B*38:01,8,artificial,ASAGWGVD,0
+random,HLA-B*38:01,9,artificial,RSRTAGSES,0
+random,HLA-B*38:01,9,artificial,DRDRVGANS,0
+random,HLA-B*38:01,9,artificial,PRLGKVAFA,0
+random,HLA-B*38:01,9,artificial,GRFQEQFDF,0
+random,HLA-B*38:01,9,artificial,SWAASTRSP,0
+random,HLA-B*38:01,10,artificial,ESTEAATDAA,0
+random,HLA-B*38:01,10,artificial,DDGISAADTG,0
+random,HLA-B*38:01,10,artificial,WVRSHSGGAV,0
+random,HLA-B*38:01,10,artificial,APGGRDVPVF,0
+random,HLA-B*38:01,10,artificial,DDEAPGGMIT,0
+random,HLA-B*38:01,11,artificial,GDYAFSVGLGA,0
+random,HLA-B*38:01,11,artificial,EQNRYNGQTAG,0
+random,HLA-B*38:01,11,artificial,GAGTPPALLAG,0
+random,HLA-B*38:01,11,artificial,AHTVLQVLGYG,0
+random,HLA-B*38:01,11,artificial,PRLRVGTGKLE,0
+random,HLA-B*08:01,8,artificial,AMFTTNPQ,0
+random,HLA-B*08:01,8,artificial,LWAAEDGV,0
+random,HLA-B*08:01,8,artificial,LAPRWGEG,0
+random,HLA-B*08:01,8,artificial,AFHVSVLV,0
+random,HLA-B*08:01,8,artificial,APSDALEV,0
+random,HLA-B*08:01,9,artificial,FIKNDRAII,0
+random,HLA-B*08:01,9,artificial,DVEEHAWGD,0
+random,HLA-B*08:01,9,artificial,APEVGYETA,0
+random,HLA-B*08:01,9,artificial,AYGLLSPGG,0
+random,HLA-B*08:01,9,artificial,DYGPDNGHT,0
+random,HLA-B*08:01,10,artificial,FEEKSGGPEV,0
+random,HLA-B*08:01,10,artificial,TPVTIEYGRQ,0
+random,HLA-B*08:01,10,artificial,TFVGTLLGET,0
+random,HLA-B*08:01,10,artificial,NREAVGQAER,0
+random,HLA-B*08:01,10,artificial,EWARAYDGPE,0
+random,HLA-B*08:01,11,artificial,AAGSIRAPGKQ,0
+random,HLA-B*08:01,11,artificial,VSFELAGHLKE,0
+random,HLA-B*08:01,11,artificial,SDAFVVGVTVN,0
+random,HLA-B*08:01,11,artificial,DGGRQDDFGLD,0
+random,HLA-B*08:01,11,artificial,VPATLYARAMG,0
+random,HLA-C*08:02,8,artificial,ALSAEDRG,0
+random,HLA-C*08:02,8,artificial,LGARAGES,0
+random,HLA-C*08:02,8,artificial,VTAQPPGM,0
+random,HLA-C*08:02,8,artificial,APEFPNEH,0
+random,HLA-C*08:02,8,artificial,EAAREAYA,0
+random,HLA-C*08:02,9,artificial,DDVARDKGW,0
+random,HLA-C*08:02,9,artificial,VWPQVRRKP,0
+random,HLA-C*08:02,9,artificial,MFDSPVQHR,0
+random,HLA-C*08:02,9,artificial,EGASDAALG,0
+random,HLA-C*08:02,9,artificial,DEVGAWKRH,0
+random,HLA-C*08:02,10,artificial,DGEQPFMVPT,0
+random,HLA-C*08:02,10,artificial,PALPELLLAD,0
+random,HLA-C*08:02,10,artificial,LVARIGLVQT,0
+random,HLA-C*08:02,10,artificial,IVAETGTLVP,0
+random,HLA-C*08:02,10,artificial,IRYAEGPEVP,0
+random,HLA-C*08:02,11,artificial,RLRPAQSAAAQ,0
+random,HLA-C*08:02,11,artificial,EPNRYLNRSGP,0
+random,HLA-C*08:02,11,artificial,APPSNRGETSR,0
+random,HLA-C*08:02,11,artificial,VLAGNEAAKAV,0
+random,HLA-C*08:02,11,artificial,MTDPLVEVLGY,0
