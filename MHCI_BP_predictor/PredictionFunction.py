@@ -194,3 +194,41 @@ def find_model(allele, length):
     else:
         return
 
+def GenerateDataForCurveDict(method, labels, predicted_scores):
+    '''generate specific data format (dictionary) for roc curve
+    method: string
+        the prediction method name.
+    labels: numpy.array
+        the array containing the labels
+    predicted_scores: np.array
+        the array containing the predicted scores of peptides
+
+    return:
+    -------
+    data_for_curve_dict: dictionary
+        key: method
+    '''
+    if type(labels) != np.ndarray:
+        labels = np.array(labels)
+    if type(predicted_scores) != np.ndarray:
+        predicted_scores = np.array(predicted_scores)
+    
+    data_for_curve_dict = {method: {}}
+    
+    fpr, tpr, thresholds = metrics.roc_curve(labels, predicted_scores)
+    result_auc = metrics.auc(fpr, tpr)
+    data_for_curve_dict[method]['x_axis_item'] = fpr.tolist()
+    data_for_curve_dict[method]['y_axis_item'] = tpr.tolist()
+    data_for_curve_dict[method]['result_auc'] = result_auc
+
+    return data_for_curve_dict
+
+def test_GenerateDataForCurveDict():
+    file_path = os.path.join(current_path, "mhci1_Tumor_result.csv")
+    dataset = pd.read_csv(file_path)
+    method = "mhci1"
+    labels = dataset.binder
+    predicted_scores = dataset.MHCi1_log50k
+    # print(GenerateDataForCurveDict(method, labels, predicted_scores))
+
+# test_GenerateDataForCurveDict()

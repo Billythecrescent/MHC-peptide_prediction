@@ -158,11 +158,19 @@ def mhci1_predictPeptide(dataset, outputFile=None):
     print(dataset)
     for allele in alleles:
         allele_dataset = dataset.loc[dataset['allele'] == allele]
-        for length in (8, 9, 10, 11):
+        lengths = allele_dataset.length.unique().tolist()
+        for length in lengths:
             data = allele_dataset.loc[allele_dataset['length'] == length]
-            reg = PF.find_model(allele, length)
-            X = data.peptide.apply(lambda x: pd.Series(blosum_encode(x)),1)
-            scores = pd.DataFrame(reg.predict(X), columns=['MHCi1_log50k'], index=data.index)
+            if len(data) == 0:
+                continue
+            aw = re.sub('[*:]','_',allele) 
+            reg = PF.find_model(aw, length)
+            if reg == None:
+                scores = pd.DataFrame(np.array(['nan']*len(data)), columns=['MHCi1_log50k'], index=data.index)
+            else:
+                X = data.peptide.apply(lambda x: pd.Series(blosum_encode(x)),1)
+                # print(data.shape, X.shape)
+                scores = pd.DataFrame(reg.predict(X), columns=['MHCi1_log50k'], index=data.index)
             result = pd.concat([data, scores], axis=1)
             df_list.append(result)
     combined_df = pd.concat(df_list, axis=0, sort=True)
@@ -173,9 +181,11 @@ def mhci1_predictPeptide(dataset, outputFile=None):
         combined_df.to_csv(outputFile)
 
 def test_mhci1_predictPeptide():
-    path = os.path.join(data_path, "VACV_evaluation_dataset.csv")
+    # path = os.path.join(data_path, "VACV_evaluation_dataset.csv")
+    path = os.path.join(data_path, "modified_mhciTumor_dataset.csv")
     dataset = pd.read_csv(path)
-    mhci1_predictPeptide(dataset, os.path.join(current_path, "mhci1_VACV_result.csv"))
+    # mhci1_predictPeptide(dataset, os.path.join(current_path, "mhci1_VACV_result.csv"))
+    mhci1_predictPeptide(dataset, os.path.join(current_path, "mhci1_Tumor_result.csv"))
 
 # test_mhci1_predictPeptide()
 
@@ -187,8 +197,8 @@ def mhci2_predictPeptide(dataset, outputFile=None):
         allele_dataset = dataset.loc[dataset['allele'] == allele]
         data_9mer = allele_dataset.loc[allele_dataset['length'] == 9]
         data_non9mer = allele_dataset.loc[allele_dataset['length'] != 9]
-        
-        reg = PF.find_model(allele, 9)
+        aw = re.sub('[*:]','_',allele) 
+        reg = PF.find_model(aw, 9)
         X = data_9mer.peptide.apply(lambda x: pd.Series(blosum_encode(x)),1)
         data_9mer_scores = pd.DataFrame(reg.predict(X), columns=['MHCi2_log50k'], index=data_9mer.index)
         data_non9mer_scores = data_non9mer.peptide.apply(lambda x: predict_non9mer(allele, x))
@@ -210,8 +220,8 @@ def mhci2_predictPeptide(dataset, outputFile=None):
         combined_df.to_csv(outputFile)
 
 def test_mhci2_predictPeptide():
-    path = os.path.join(data_path, "VACV_evaluation_dataset.csv")
+    path = os.path.join(data_path, "modified_mhciTumor_dataset.csv")
     dataset = pd.read_csv(path)
-    mhci2_predictPeptide(dataset, os.path.join(current_path, "mhci2_VACV_result.csv"))
+    mhci2_predictPeptide(dataset, os.path.join(current_path, "mhci2_Tumor_result.csv"))
 
 # test_mhci2_predictPeptide()

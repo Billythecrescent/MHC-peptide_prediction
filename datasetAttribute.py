@@ -108,7 +108,7 @@ def test_datasetLengthDistribution():
     dataset = mhcii_dataset.loc[mhcii_dataset["allele"] == "HLA-DRB1*0101"]
     datasetLengthDistribution(dataset, os.path.join(module_path, "Distr-mhcii-DRB1.csv"))
 
-test_datasetLengthDistribution()
+# test_datasetLengthDistribution()
 
 # train_set1 = ep.get_training_set(length=8)
 # train_set2 = ep.get_training_set(length=10)
@@ -123,3 +123,9 @@ test_datasetLengthDistribution()
 # datasetAllele(data_allmer, output_filename = "mhci_allmer")
 # dataset = data_allmer.loc[data_allmer['length'] != 9]
 # datasetDistribute(dataset, 'log50k', 'csv', "Distri_mhci_non9mer_data", 0.426)
+
+data = pd.read_csv(os.path.join(data_path, "mhci_tumor_testData.csv"))
+alleles = data.allele.to_numpy()
+allele_unique, allele_counts = np.unique(alleles, return_counts=True)
+distri = pd.DataFrame(allele_counts, index=allele_unique)
+print(distri)

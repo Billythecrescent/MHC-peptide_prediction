@@ -454,21 +454,85 @@ def BuildPredictor(dataset, hidden_node, ifRandomStart, score_filename):
         auc_df.to_csv(os.path.join(current_path, score_filename + "_auc.csv"), mode='a', header=False)
         r_df.to_csv(os.path.join(current_path, score_filename + "_PCC.csv"), mode='a', header=False)
         
-        # aw = re.sub('[*:]','_',allele)
-        # fname = os.path.join(os.path.join(path, StartType), aw +'.joblib')
-        # if reg is not None:
-        #     joblib.dump(reg, fname, protocol=2)
-        #     print("%s fitting of allele %s is done" %(StartType, allele))
+        aw = re.sub('[*:]','_',allele)
+        fname = os.path.join(os.path.join(path, StartType), aw +'.joblib')
+        if reg is not None:
+            joblib.dump(reg, fname, protocol=2)
+            print("%s fitting of allele %s is done" %(StartType, allele))
+
+def allmer_find_model(allele, StartType):
+    '''Find model for alleles of allmer prediction. 
+        ExistStart: models/allmer/ExistStart; RandomStart: models/allmer/RandomStart
+    SHOULD "import joblib" first
+    allele: string
+        standardized allele name (by regex according to the prediction method)
+        It is different from true allele because Windows os file system
+    StartType: string
+        "RandomStart" or "ExistStart"
+
+    Return
+    ------
+    reg: MLPRegressor
+        the regression predictor
+    '''
+    allmer_path = os.path.join(model_path, "allmer")
+    if StartType == "RandomStart":
+        fname = os.path.join(os.path.join(allmer_path, "RandomStart"), allele +'.joblib')
+    elif StartType == "ExistStart":
+        fname = os.path.join(os.path.join(allmer_path, "ExistStart"), allele +'.joblib')
+    print(fname)
+    if os.path.exists(fname):
+        reg = joblib.load(fname)
+        return reg
+    else:
+        return
+
+def AffinityPredict(dataset, ifRandomStart, outputFile=None):
+    alleles = dataset.allele.unique().tolist()
+    df_list = []
+    # print(dataset)
+    for allele in alleles:
+        allele_dataset = dataset.loc[dataset['allele'] == allele]
+        
+        if ifRandomStart == True:
+            StartType = "RandomStart"
+        else:
+            StartType = "ExistStart"
+        aw = re.sub('[*:]','_',allele) 
+        reg = allmer_find_model(aw, StartType)
+        X = allele_dataset.peptide.apply(lambda x: pd.Series(AllmerPrepredict(allele, x, blosum_encode, reg, False)),1).to_numpy()
+        scores = pd.DataFrame(reg.predict(X), columns=['MHCi3_log50k'+StartType], index=allele_dataset.index)
+        result = pd.concat([allele_dataset, scores], axis=1)
+        # print(result)
+        df_list.append(result)    
+
+    combined_df = pd.concat(df_list, axis=0, sort=True)
+    combined_df.sort_index(inplace=True)
+    print(combined_df)
+
+    if outputFile != None:
+        combined_df.to_csv(outputFile)
+
+def testAffinityPredict():
+    path = os.path.join(data_path, "VACV_evaluation_dataset.csv")
+    # path = os.path.join(data_path, "modified_mhciTumor_dataset.csv")
+    dataset = pd.read_csv(path)
+    # AffinityPredict(dataset, False, os.path.join(current_path, "mhci3_ExistStart_Tumor_result.csv"))
+    AffinityPredict(dataset, True, os.path.join(current_path, "mhci3_RandomStart_VACV_result.csv"))
+
+testAffinityPredict()
 
 def main():
     t0 = time()
 
     path = os.path.join(data_path, "modified_mhc.20130222.csv")
     dataset = pd.read_csv(path)
-    for i in range(7, 11):
-        BuildPredictor(dataset, i, False, "AllmerPredictionResult")
+    # for i in (12, 15):
+    #     BuildPredictor(dataset, i, False, "AllmerPredictionResult")
+    bestHD = 8
+    BuildPredictor(dataset, bestHD, True, "AllmerPrediction_RandomStart_HD8_CV5")
     
     t1 = time()
     print ("Elapsed time (m):", (t1-t0)/60)
 
-main()
+# main()

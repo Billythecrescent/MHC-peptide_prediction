@@ -285,7 +285,12 @@ def AddRandomDataToDataset(DatasetFile, LengthList = [8, 9, 10, 11], SeqNum = 10
         output_path = os.path.join(current_path, output_filename + ".csv")
         CombinedDatframe.to_csv(output_path)
 
-aller_mhci = os.path.join(data_path, "mhci.20130222.csv")
-AddRandomDataToDataset(aller_mhci, output_filename = "modified_mhc.20130222")
+####---- IEDB mhci 2013 data ----####
+# aller_mhci = os.path.join(data_path, "mhci.20130222.csv")
+# AddRandomDataToDataset(aller_mhci, output_filename = "modified_mhc.20130222")
+
+####---- unpublished mhci tumor epitope data ----####
+# Tumorpath = os.path.join(data_path, "mhci_tumor_testData.csv")
+# AddRandomDataToDataset(Tumorpath, LengthList=[8, 9, 10, 11], SeqNum = 5, output_filename="modified_mhciTumor_dataset.csv")
 
 

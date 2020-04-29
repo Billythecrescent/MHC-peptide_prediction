@@ -44,9 +44,9 @@ def build_predictor(training_data, allele, encoder, hidden_node):
     # aw = re.sub('[*:]','_',allele) 
     # data.to_csv(os.path.join('alletes',aw+'_data.csv'))
     
-    reg = MLPRegressor(hidden_layer_sizes=(hidden_node), alpha=0.01, max_iter=500,
-                        activation='relu', solver='lbfgs', random_state=2)    
-    X = data.peptide.apply(lambda x: pd.Series(encoder(x)),1) #Find bug: encoding result has NaN
+    reg = MLPRegressor(hidden_layer_sizes=(hidden_node), alpha=0.01, max_iter=1000,
+                        activation='relu', solver='adam', random_state=2)    
+    X = data.peptide.apply(lambda x: pd.Series(encoder(x)),1)
     y = data.log50k
 
     ## ---- TEST ---- ##
@@ -57,16 +57,15 @@ def build_predictor(training_data, allele, encoder, hidden_node):
     return reg
 
 def build_prediction_model(training_data, length, hidden_node):
-    al = get_allele_names(training_data)
-    print(al)
+    alleles = training_data.allele.unique().tolist()
     path = os.path.join(model_path, "Non9mer")
-    for a in al:
-        aw = re.sub('[*:]','_',a) 
+    for allele in alleles:
+        aw = re.sub('[*:]','_',allele) 
         fname = os.path.join(path, aw + "-" + str(length) +'.joblib')
-        print(aw + "-" + str(length) + ".joblib is done.")
-        reg = build_predictor(training_data, a, blosum_encode, 20)
+        reg = build_predictor(training_data, allele, blosum_encode, hidden_node)
         if reg is not None:
             joblib.dump(reg, fname, protocol=2)
+            print("%s is done" %fname)
 
 def evaluate_predictor(X, y, allele, length):
 
@@ -168,15 +167,16 @@ def test_Non9merCrossValid():
         print("length %d is done, run in Elapsed time %d(m)" %(length, (t1-t0)/60))
 
 
-test_Non9merCrossValid()
+# test_Non9merCrossValid()
 
 ## Build predictor ##
 def build_model_controller():
-    # data8mer = pd.read_csv(os.path.join(data_path, "ep_8mer_training_data.csv"))
-    # data10mer = pd.read_csv(os.path.join(data_path, "ep_10mer_training_data.csv"))
-    data11mer = pd.read_csv(os.path.join(data_path, "ep_11mer_training_data.csv"))
-    # print(data8mer)
-    build_prediction_model(data11mer, 11, 20)
+    path = os.path.join(data_path, "modified_mhc.20130222.csv")
+    dataset = pd.read_csv(path)
+    for length in (8, 10, 11, 12, 13, 14):
+        length_dataset = dataset.loc[dataset['length'] == length]
+        if len(length_dataset) > 20:
+            build_prediction_model(length_dataset, length, 20)
 
 
 # build_model_controller()
