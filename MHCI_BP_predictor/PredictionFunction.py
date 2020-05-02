@@ -154,6 +154,13 @@ def randomPeptideGenerator(TranscribeTableNum, l, seqNum):
     # print(AASequences)
     return AASequences
 
+# for i in (9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21):
+#     randomPeptides = np.array(list(zip(randomPeptideGenerator(11, i, 20), [i]*20)))
+#     print(randomPeptides)
+#     randomPeptides_df = pd.DataFrame(randomPeptides, columns=['peptide', 'length'])
+#     print(randomPeptides_df)
+#     randomPeptides_df.to_csv(os.path.join(data_path, "mhcii_random.csv"), mode='a')
+
 def geo_mean(iterable):
     nplist = np.array(iterable)
     for i in range(len(nplist)):

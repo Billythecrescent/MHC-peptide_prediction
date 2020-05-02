@@ -21,6 +21,14 @@ model_path = os.path.join(module_path,"models") #code\MHC-peptide_prediction\mod
 data_path = os.path.join(module_path,"data") #code\MHC-peptide_prediction\data
 mhcii_path = os.path.join(data_path, "mhcii")
 
+def readBLOSUM50():
+    filepath = os.path.join(current_path, "BLOSUM50.txt")
+    # header = ['A','R','N','D','C','Q','E','G','H','I','L','K','M','F','P','S','T','W','Y','V','B','Z','X','*']
+    blosum50 = pd.read_csv(filepath, header=0, index_col=0)
+    return blosum50
+
+blosum50 = readBLOSUM50()
+
 def readData(dirname):
     '''read mhcii affinity data from dirname directory. 
     NOTE: no other files be permitted in this dir
@@ -103,6 +111,20 @@ def blosum_encode(seq):
     s=list(seq)
     blosum62 = ep.blosum62
     x = pd.DataFrame([blosum62[i] for i in seq]).reset_index(drop=True)
+    e = x.to_numpy().flatten() 
+    # print(x)   
+    return e
+
+def blosum50_encode(seq):
+    '''
+    Encode protein sequence, seq, to one-dimension array.
+    Use blosum62 matrix to encode the number.
+    input: [string] seq (length = n)
+    output: [1x24n ndarray] e
+    '''
+    #encode a peptide into blosum features
+    s=list(seq)
+    x = pd.DataFrame([blosum50[i] for i in seq]).reset_index(drop=True)
     e = x.to_numpy().flatten() 
     # print(x)   
     return e

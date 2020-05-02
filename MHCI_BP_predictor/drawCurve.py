@@ -22,12 +22,18 @@ data_path = os.path.join(module_path,"data") #code\MHC-peptide_prediction\data
 result_dir_prefix = os.path.join(current_path, "results")
 
 # this indicates the colors to be used in curve plots
-colors = {'mhci1': 'olive', 'mhci3_Random': 'green', 'mhci2': 'cyan',
-          'mhci3_Exist': 'navy', 'NetMHC4': 'orange'}
+colors = {'mhci1': 'olive', 'mhci3_Random': 'green', 'mhci2': 'cyan',"panExistGeneral_NetMHC": "olive", "panExistGeneral_globalCore": "brown", \
+    "panExistSpecific_NetMHC": "magenta", "panExistSpecific_H-2": "darkkhaki", "panExistSpecific_globalCore": "royalblue", "NetMHCpan4": "goldenrod",
+          'mhci3_Exist': 'navy', 'NetMHC4': 'orange', "panExistSpecific_HLA": "cyan", "panExistGeneral_HLA": "pink", "NetMHCpan4'": "orange", \
+    "NetMHCii": "orange", "mhcii": "navy"}
 
 # this indicates the real name of the method with proper format. this is used in the final plots.
-method_names_proper = {'NetMHC4': 'NetMHC-4.0', 'mhci1': 'cMHCi1',
-                       'mhci2': 'cMHCi2', 'mhci3_Exist': 'cMHCi3_ExistStart', 'mhci3_Random': 'cMHCi3_RandomStart'}
+method_names_proper = {'NetMHC4': 'NetMHC-4.0', 'mhci1': 'cMHCi1', "panExistGeneral_NetMHC": "MHCipan_ExistStart_General_NetMHC", \
+    "panExistGeneral_globalCore": "MHCipan_ExistStart_General_globalCore", "panExistSpecific_NetMHC": "MHCipan_ExistStart_Specific_NetMHC", \
+    "panExistSpecific_H-2": "MHCipan_ExistStart_Specific_H-2", "panExistSpecific_globalCore": "MHCipan_ExistStart_Specific_globalCore", \
+    "NetMHCpan4": "NetMHCpan-4.0", 'mhci2': 'cMHCi2', 'mhci3_Exist': 'cMHCi3_ExistStart', 'mhci3_Random': 'cMHCi3_RandomStart', \
+    "panExistSpecific_HLA": "MHCipan_ExistStart_Specific_HLA", "panExistGeneral_HLA": "MHCipan_ExistStart_General_HLA", "NetMHCpan4'": "NetMHCpan-4.0_general", \
+    "NetMHCii": "NetMHCII-2.3", "mhcii": "cMHCii"}
 
 def locate_y_coordinate_for_specific_x_coordinate(data_df, zoom_level):
     """
@@ -141,20 +147,24 @@ def make_curves(methods, zoom_or_full, x_axis_type, data_for_curves_dict, title,
     print('->', plot_file_name, u'\u2713')
 
 def draw():
-    dataName = "VACV"
-    methods = ["mhci1", "mhci2", "mhci3_Random", "mhci3_Exist", "NetMHC4"]
+    # dataName = "VACV"
+    dataName = "Tumor"
+    # methods = ["mhci1", "mhci2", "mhci3_Random", "mhci3_Exist", "NetMHC4"]
+    # methods = ["panExistGeneral_NetMHC", "panExistGeneral_globalCore", "panExistGeneral_HLA", "panExistSpecific_NetMHC", \
+    #     "panExistSpecific_HLA", "panExistSpecific_globalCore", "NetMHCpan4", "NetMHCpan4'"]
+    methods = ["NetMHCii", "mhcii"]
     data_for_curve_dict = {}
     prediction_path = os.path.join(current_path, "prediction_data")
     for method in methods:
         file_path = os.path.join(prediction_path, method+'_'+dataName+'_result.csv')
         dataset = pd.read_csv(file_path)
-        dataset = dataset.loc[dataset['immunogenicity'] != 'minor']
+        # dataset = dataset.loc[dataset['immunogenicity'] != 'minor']
         labels = dataset.binder
         predicted_scores = dataset.log50k
         dic = PF.GenerateDataForCurveDict(method, labels, predicted_scores)
         data_for_curve_dict.update(dic)
-    make_curves(methods, 'full', 'fpr', data_for_curve_dict, 'ROC curves (epitope binary classification based; all methods)','roc_curves_binary_classification_based.png')
-    make_curves(methods, 'zoom', 'fpr', data_for_curve_dict, 'ROC curves (epitope binary classification based; all methods; zoomed-in to FPR = 0.02)','roc_curves_binary_classification_based_zoomed_in.png')
+    make_curves(methods, 'full', 'fpr', data_for_curve_dict, 'MHCii ROC curves (epitope binary classification based; all methods)','roc_curves_binary_classification_based.png')
+    make_curves(methods, 'zoom', 'fpr', data_for_curve_dict, 'MHCii ROC curves (epitope binary classification based; all methods; zoomed-in to FPR = 0.02)','roc_curves_binary_classification_based_zoomed_in.png')
 
 
 draw()

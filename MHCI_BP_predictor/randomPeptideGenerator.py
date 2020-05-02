@@ -293,4 +293,7 @@ def AddRandomDataToDataset(DatasetFile, LengthList = [8, 9, 10, 11], SeqNum = 10
 # Tumorpath = os.path.join(data_path, "mhci_tumor_testData.csv")
 # AddRandomDataToDataset(Tumorpath, LengthList=[8, 9, 10, 11], SeqNum = 5, output_filename="modified_mhciTumor_dataset.csv")
 
+####---- unpublished mhcii tumor epitope data ----####
+Tumorpath = os.path.join(data_path, "mhciiTumor_dataset.csv")
+AddRandomDataToDataset(Tumorpath, LengthList=range(9, 21), SeqNum = 2, output_filename="modified_mhciiTumor_dataset.csv")
 

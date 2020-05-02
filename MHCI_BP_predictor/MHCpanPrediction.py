@@ -743,7 +743,7 @@ def leaveOnePrediction(dataset, hidden_node, outputFile):
             print(r_df)
             auc_df.to_csv(os.path.join(current_path, outputFile+'_auc.csv'), header=False, mode='a')
             auc_df.to_csv(os.path.join(current_path, outputFile+'_pcc.csv'), header=False, mode='a')
-
+            
 
 def test_leaveOnePrediction():
     file_path = os.path.join(data_path, "modified_mhc.20130222.csv")
@@ -753,7 +753,233 @@ def test_leaveOnePrediction():
     outputFile = "MHCpan_LeaveOne_ExistStart"
     leaveOnePrediction(dataset, hidden_node, outputFile)
 
-test_leaveOnePrediction()
+# test_leaveOnePrediction()
+
+def SpeciesPrediction(dataset, hidden_node, outputFile):
+    species_list = ["chimpanzee", "macaque", "pig", "mouse", "human"]
+    # species_list = ["mouse", "pig", "human"]
+    pseudoPositionDic = {"NetMHC": PC.NetMHC_pseudo_sequence, "global_core": PC.globel_pseudo_sequence_core, "HLA": PC.HLA_pseudo_sequence}
+    for species in species_list:
+        if species == "chimpanzee":
+            pseudos = {"Mamu": PC.Mamu_pseudo_sequence, "NetMHC": PC.NetMHC_pseudo_sequence, "global_core": PC.globel_pseudo_sequence_core}
+        elif species == "macaque":
+            pseudos = {"Mamu": PC.Mamu_pseudo_sequence, "NetMHC": PC.NetMHC_pseudo_sequence, "global_core": PC.globel_pseudo_sequence_core, "HLA": PC.HLA_pseudo_sequence}
+        elif species == "mouse":
+            pseudos = {"H-2": PC.H_2_pseudo_sequence, "NetMHC": PC.NetMHC_pseudo_sequence, "global_core": PC.globel_pseudo_sequence_core}
+        elif species == "pig":
+            pseudos = {"SLA": PC.SLA_pseudo_sequence, "NetMHC": PC.NetMHC_pseudo_sequence, "global_core": PC.globel_pseudo_sequence_core}
+        elif species == "human":
+            pseudos = {"NetMHC": PC.NetMHC_pseudo_sequence, "global_core": PC.globel_pseudo_sequence_core, "HLA": PC.HLA_pseudo_sequence}
+        species_dataset = dataset.loc[dataset["species"] == species]
+        for key in pseudos:
+            if key in pseudoPositionDic:
+                continue
+            pseudo_position = pseudos[key]
+            MHCSeqDic = loadMHCSeq()
+            y = species_dataset.log50k.to_numpy()
+
+            print("\nPrediction Mode: Species Specific ExistStart Prediction\nEncode Method: blosum50\nhidden node: %d\nspecies: %s\npseudoName: %s\n" \
+            %(hidden_node, species, key))
+
+            fname = os.path.join(os.path.join(model_path, "pan"), "BasicMHCIpan_" + key +".joblib")
+            if os.path.exists(fname):
+                ExistReg = joblib.load(fname)
+            else:
+                ExistReg = None
+
+            if ExistReg is None:
+                print ('Locals do not have basic MHCpan model.')
+                return  
+
+            reg = MLPRegressor(hidden_layer_sizes=(hidden_node), alpha=0.01, max_iter=5000,
+                                activation='relu', solver='adam', random_state=2)
+            ##cross_validation not done
+            PreCirNum = 10
+            avg_auc_list = []
+            avg_r_list = []
+            for rd in range(PreCirNum):
+                print("Round %d starts" % rd)
+                auc_list = []
+                r_list = []
+                ##encode the peptide
+                if rd == 0:
+                    X = species_dataset.apply(lambda x: pd.Series(AllmerPanPrepredict(pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position), x.peptide, blosum_encode, ExistReg, True)),1).to_numpy()
+                else:
+                    X = species_dataset.apply(lambda x: pd.Series(AllmerPanPrepredict(pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position), x.peptide, blosum_encode, reg, False)),1).to_numpy()
+
+                kf = KFold(n_splits=5, shuffle=True, random_state=0)
+                for k, (train, test) in enumerate(kf.split(X, y)):
+                    print("Round %d fold %d starts" %(rd, k))
+                    reg.fit(X[train], y[train])
+                    scores = reg.predict(X[test])
+                    # print(scores)
+                    auc = PF.auc_score(y[test], scores, cutoff=.426)
+                    r = PF.pearson_score(y[test], scores)
+                    auc_list.append(auc)
+                    r_list.append(r)
+                
+                avg_auc = np.mean(auc_list)
+                avg_r = np.mean(r_list)
+                if len(avg_auc_list) > 0 and avg_auc < 0.99*avg_auc_list[-1]:
+                    break
+                avg_auc_list.append(avg_auc)
+                avg_r_list.append(avg_r)
+
+            # print(avg_auc_list)
+            # print(avg_r_list)
+            
+            auc_df = pd.DataFrame(np.array(avg_auc_list[-1:]+avg_auc_list).reshape(1,-1), columns = ['final']+[str(i+1)+"-round" for i in range(len(avg_auc_list))], index=[species+"_"+key])
+            r_df = pd.DataFrame(np.array(avg_r_list[-1:]+avg_r_list).reshape(1,-1), columns = ['final']+[str(i+1)+"-round" for i in range(len(avg_r_list))], index=[species+"_"+key])
+            print(auc_df)
+            print(r_df)
+            
+            auc_df.to_csv(os.path.join(current_path, outputFile+'_auc.csv'), header=False, mode='a')
+            auc_df.to_csv(os.path.join(current_path, outputFile+'_pcc.csv'), header=False, mode='a')
+
+            path = os.path.join(model_path, "allmerPan")
+            fname = os.path.join(os.path.join(path, 'ExistStart'), species+"_"+key+'.joblib')
+            if reg is not None:
+                joblib.dump(reg, fname, protocol=2)
+                print("%s fitting pseudo %s is done" %('ExistStart', species+"_"+key))
+
+
+def test_SpeciesPrediction():
+    file_path = os.path.join(data_path, "modified_mhc.20130222.csv")
+    dataset = pd.read_csv(file_path)
+    datset = shuffle(dataset, random_state=0)
+    hidden_node = 68
+    outputFile = "MHCpan_SpeciesSpecific_ExistStart"
+    SpeciesPrediction(dataset, hidden_node, outputFile)
+
+# test_SpeciesPrediction()
+
+def cross_Prediction():
+    '''Use a part of dataset of a species as test data, others (including other species) are training set.
+    On HLA only. Use data mhci_HLA.csv, containing "subtype" column.
+    '''
+    dataset = pd.read_csv(os.path.join(data_path, "mhci_HLA.csv"))
+    # dataset = dataset.loc[dataset['length'] ==11]
+    hidden_node = 68
+    outputFile = "mhcipan_CrossPrediction"
+
+    subtypes = dataset.subtype.unique().tolist()
+    pseudoPositionDic = {"NetMHC": PC.NetMHC_pseudo_sequence, "global_core": PC.globel_pseudo_sequence_core, "HLA": PC.HLA_pseudo_sequence}
+    for subtype in subtypes:
+        subtype_dataset = dataset.loc[dataset['subtype'] == subtype]
+        other_dataset = dataset.loc[dataset['subtype'] != subtype]
+        for key in pseudoPositionDic:
+            pseudo_position = pseudoPositionDic[key]
+            MHCSeqDic = loadMHCSeq()
+            y_train = other_dataset.log50k.to_numpy()
+            y_test = subtype_dataset.log50k.to_numpy()
+            
+            print("\nPrediction Mode: ExistStart Prediction\nEncode Method: blosum50\nhidden node: %d\nsubtype: %s\npseudoName: %s\n" \
+            %(hidden_node, subtype, key))
+
+            fname = os.path.join(os.path.join(model_path, "pan"), "BasicMHCIpan_" + key +".joblib")
+            if os.path.exists(fname):
+                ExistReg = joblib.load(fname)
+            else:
+                ExistReg = None
+
+            if ExistReg is None:
+                print ('Locals do not have basic MHCpan model.')
+                return  
+
+            reg = MLPRegressor(hidden_layer_sizes=(hidden_node), alpha=0.01, max_iter=5000,
+                                activation='relu', solver='adam', random_state=2)
+            ##cross_validation not done
+            PreCirNum = 6
+            auc_list = []
+            r_list = []
+            for rd in range(PreCirNum):
+                print("Subtype: %s, pseudo: %s, round %d starts" %(subtype, key, rd))
+                ##encode the peptide
+                if rd == 0:
+                    X_train = other_dataset.apply(lambda x: pd.Series(AllmerPanPrepredict(pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position), x.peptide, blosum_encode, ExistReg, True)),1).to_numpy()
+                    X_test = subtype_dataset.apply(lambda x: pd.Series(AllmerPanPrepredict(pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position), x.peptide, blosum_encode, ExistReg, True)),1).to_numpy()
+                else:
+                    X_train = other_dataset.apply(lambda x: pd.Series(AllmerPanPrepredict(pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position), x.peptide, blosum_encode, reg, False)),1).to_numpy()
+                    X_test = subtype_dataset.apply(lambda x: pd.Series(AllmerPanPrepredict(pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position), x.peptide, blosum_encode, reg, False)),1).to_numpy()
+                reg.fit(X_train, y_train)
+                scores = reg.predict(X_test)
+                # print(scores)
+                auc = PF.auc_score(y_test, scores, cutoff=.426)
+                r = PF.pearson_score(y_test, scores)
+                if len(auc_list) > 0 and auc < 0.99*auc_list[-1]:
+                    break
+                auc_list.append(auc)
+                r_list.append(r)
+            
+            auc_df = pd.DataFrame(np.array(auc_list[-1:]+auc_list).reshape(1,-1), columns = ['final']+[str(i+1)+"-round" for i in range(len(auc_list))], index=[subtype+"_"+key])
+            r_df = pd.DataFrame(np.array(r_list[-1:]+r_list).reshape(1,-1), columns = ['final']+[str(i+1)+"-round" for i in range(len(r_list))], index=[subtype+"_"+key])
+            
+            print(auc_df)
+            print(r_df)
+            auc_df.to_csv(os.path.join(current_path, outputFile+'_auc.csv'), header=False, mode='a')
+            auc_df.to_csv(os.path.join(current_path, outputFile+'_pcc.csv'), header=False, mode='a')
+
+
+# cross_Prediction()
+
+def PredictScore(dataset, hidden_node, ifSpecific, outputFile):
+    species_list = dataset.species.unique().tolist()
+    df_list = []
+    # species_list = ['pig']
+    pseudoPositionDic = {"NetMHC": PC.NetMHC_pseudo_sequence, "global_core": PC.globel_pseudo_sequence_core, "HLA": PC.HLA_pseudo_sequence}
+    for species in species_list:
+        if species == "chimpanzee":
+            pseudos = {"Mamu": PC.Mamu_pseudo_sequence, "NetMHC": PC.NetMHC_pseudo_sequence, "global_core": PC.globel_pseudo_sequence_core}
+        elif species == "macaque":
+            pseudos = {"Mamu": PC.Mamu_pseudo_sequence, "NetMHC": PC.NetMHC_pseudo_sequence, "global_core": PC.globel_pseudo_sequence_core, "HLA": PC.HLA_pseudo_sequence}
+        elif species == "mouse":
+            pseudos = {"H-2": PC.H_2_pseudo_sequence, "NetMHC": PC.NetMHC_pseudo_sequence, "global_core": PC.globel_pseudo_sequence_core}
+        elif species == "pig":
+            pseudos = {"SLA": PC.SLA_pseudo_sequence, "NetMHC": PC.NetMHC_pseudo_sequence, "global_core": PC.globel_pseudo_sequence_core}
+        elif species == "human" or "Homo sapiens":
+            pseudos = {"NetMHC": PC.NetMHC_pseudo_sequence, "global_core": PC.globel_pseudo_sequence_core, "HLA": PC.HLA_pseudo_sequence}
+        species_dataset = dataset.loc[dataset["species"] == species]
+        path = os.path.join(model_path, "allmerPan")
+        if species == "Homo sapiens":
+            species = "human"
+        for key in pseudos:
+            pseudo_position = pseudos[key]
+            if ifSpecific:
+                fname = os.path.join(os.path.join(path, 'ExistStart'), species+"_"+key+'.joblib')
+            else:
+                fname = os.path.join(os.path.join(path, 'ExistStart'), key+'.joblib')
+            # print(fname)
+            if os.path.exists(fname):
+                reg = joblib.load(fname)
+            else:
+                print("Can not find the model in %s" %path)
+                continue
+
+            print("\nPrediction Mode: ExistStart Prediction\nEncode Method: blosum50\nhidden node: %d\nspecies: %s\npseudoName: %s\n" \
+                %(hidden_node, species, key))
+            MHCSeqDic = loadMHCSeq()
+            X = species_dataset.apply(lambda x: pd.Series(AllmerPanPrepredict(pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position), x.peptide, blosum_encode, reg, False)),1).to_numpy()
+            scores = pd.DataFrame(reg.predict(X), columns=['MHCipan_Exist_log50k'], index=species_dataset.index)
+            result = pd.concat([species_dataset, scores], axis=1)
+            # print(result)
+            df_list.append(result)    
+
+        combined_df = pd.concat(df_list, axis=0, sort=True)
+        # combined_df.sort_index(inplace=True)
+        print(combined_df)
+
+        if outputFile != None:
+            combined_df.to_csv(outputFile)
+
+def test_PredictScore():
+    # path = os.path.join(data_path, "VACV_evaluation_dataset.csv")
+    path = os.path.join(data_path, "modified_mhciTumor_dataset.csv")
+    dataset = pd.read_csv(path)
+    # AffinityPredict(dataset, False, os.path.join(current_path, "mhci3_ExistStart_Tumor_result.csv"))
+    # PredictScore(dataset, 68, True, os.path.join(current_path, "mhcipan_ExistStart_Specific_VACV_result.csv"))
+    PredictScore(dataset, 68, True, os.path.join(current_path, "mhcipan_ExistStart_Specific_Tumor_result.csv"))
+
+test_PredictScore()
 
 def main():
     file_path = os.path.join(data_path, "modified_mhc.20130222.csv")
@@ -765,20 +991,22 @@ def main():
     # print(shuffled_dataset.allele.unique())
     # print(pseudoPosition)
     bestHidenNode = 68
-    pseudoPositionDic = {"Mamu": PC.Mamu_pseudo_sequence, "NetMHC": PC.NetMHC_pseudo_sequence, "global_core": PC.globel_pseudo_sequence_core, \
-        "global_general": PC.globel_pseudo_sequence_general}
+    species_list = ["chimpanzee", "macaque", "mouse", "pig"]
+    # pseudoPositionDic = {"Mamu": PC.Mamu_pseudo_sequence, "NetMHC": PC.NetMHC_pseudo_sequence, "global_core": PC.globel_pseudo_sequence_core, \
+    #     "global_general": PC.globel_pseudo_sequence_general, "H-2": PC.H_2_pseudo_sequence, "HLA": PC.HLA_pseudo_sequence, "SLA": PC.SLA_pseudo_sequence}
+    pseudoPositionDic = {'H-2': PC.H_2_pseudo_sequence}
     order = []
-    # for key in pseudoPositionDic:
-    #     pseudoPosition = pseudoPositionDic[key]
-    #     data9mer = dataset.loc[dataset['length'] == 9]
-    #     shuffled_dataset = shuffle(data9mer, random_state=0)
-    #     hidden_node = 20
-    #     Basic9merPanPrediction(shuffled_dataset, hidden_node, key, pseudoPosition, blosum_encode)
-        
     for key in pseudoPositionDic:
-        MHCpanBuildPredictor(dataset, blosum_encode, bestHidenNode, False, key, pseudoPositionDic, "MHCpan-ExistStart-AllPseudo")
-        # MHCpanBuildPredictor(dataset, blosum_encode, bestHidenNode, True, key, pseudoPositionDic, "MHCpan-RandomStart-AllPseudo")
-        order.append(key)
-    print(order)
+        pseudoPosition = pseudoPositionDic[key]
+        data9mer = dataset.loc[dataset['length'] == 9]
+        shuffled_dataset = shuffle(data9mer, random_state=0)
+        hidden_node = 20
+        Basic9merPanPrediction(shuffled_dataset, hidden_node, key, pseudoPosition, blosum_encode)
+        
+    # for key in pseudoPositionDic:
+    #     MHCpanBuildPredictor(dataset, blosum_encode, bestHidenNode, False, key, pseudoPositionDic, "MHCpan-ExistStart-AllPseudo")
+    #     # MHCpanBuildPredictor(dataset, blosum_encode, bestHidenNode, True, key, pseudoPositionDic, "MHCpan-RandomStart-AllPseudo")
+    #     order.append(key)
+    # print(order)
 
 # main()

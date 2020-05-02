@@ -32,7 +32,7 @@ model_path = os.path.join(module_path,"models") #code\MHC-peptide_prediction\mod
 data_path = os.path.join(module_path,"data") #code\MHC-peptide_prediction\data
 mhcii_path = os.path.join(data_path, "mhcii")
 
-blosum_encode = PF2.blosum_encode
+blosum_encode = PF2.blosum50_encode
 
 def EncodeTo9mer(seq, blosum_encode):
     '''Transform allmer sequence to potential 9mer binding core
@@ -367,7 +367,7 @@ def BuildPredictor(dataset, hidden_node, score_filename):
     # print(shuffled_dataset)
     alleles = dataset.allele.unique().tolist()
 
-    print("Prediction\nEncode Method: blosum62\nhidden node: %d\noutput filename: %s\n" \
+    print("Prediction\nEncode Method: blosum50\nhidden node: %d\noutput filename: %s\n" \
      %(hidden_node, score_filename))
 
     for allele in alleles:
@@ -376,6 +376,56 @@ def BuildPredictor(dataset, hidden_node, score_filename):
         reg, auc_df, r_df= MHCiiPredictor(allele, allele_dataset, hidden_node, blosum_encode)
         auc_df.to_csv(os.path.join(current_path, score_filename + '_' + aw + "_auc.csv"), mode='a', header=False)
         r_df.to_csv(os.path.join(current_path, score_filename + '_' + aw + "_PCC.csv"), mode='a', header=False)
+
+        #store the predictor
+        ModelPath = os.path.join(model_path, "mhcii")
+        aw = re.sub('[*:]','_', allele) 
+        fname = os.path.join(ModelPath, "MHCII_"+aw+".joblib")
+        if reg is not None:
+            joblib.dump(reg, fname, protocol=2)
+            print("MHCpan predictor for %s is done." %allele)
+            print("Model path: %s" %fname)
+
+def AffinityPredict(dataset, outputFile=None):
+    alleles = dataset.allele.unique().tolist()
+    df_list = []
+    # print(dataset)
+    for allele in alleles:
+        allele_dataset = dataset.loc[dataset['allele'] == allele]
+        
+        aw = re.sub('[*:]','_',allele) 
+        ModelPath = os.path.join(model_path, "mhcii")
+        fname = os.path.join(ModelPath, "MHCII_"+aw+".joblib")
+        if os.path.exists(fname):
+            print(fname)
+            reg = joblib.load(fname)
+        else:
+            print("Can not find the model for %s in %s" %(allele, fname))
+            continue
+
+        X = allele_dataset.peptide.apply(lambda x: pd.Series(AllmerPrepredict(x, blosum_encode, reg)),1).to_numpy()
+        scores = pd.DataFrame(reg.predict(X), columns=['log50k'], index=allele_dataset.index)
+        result = pd.concat([allele_dataset, scores], axis=1)
+        # print(result)
+        df_list.append(result)    
+
+    combined_df = pd.concat(df_list, axis=0, sort=True)
+    combined_df.sort_index(inplace=True)
+    print(combined_df)
+
+    if outputFile != None:
+        combined_df.to_csv(outputFile)
+
+def testAffinityPredict():
+    # path = os.path.join(data_path, "mhcii_random.csv")
+    path = os.path.join(data_path, "mhciiTumor_dataset.csv")
+    # path = os.path.join(data_path, "modified_mhciTumor_dataset.csv")
+    dataset = pd.read_csv(path)
+    # AffinityPredict(dataset, False, os.path.join(current_path, "mhci3_ExistStart_Tumor_result.csv"))
+    # AffinityPredict(dataset, os.path.join(current_path, "mhcii_random_result.csv"))
+    AffinityPredict(dataset, os.path.join(current_path, "mhcii_Tumor_result.csv"))
+
+testAffinityPredict()
 
 def main():
     t0 = time()
@@ -391,4 +441,4 @@ def main():
     t1 = time()
     print ("Elapsed time (m):", (t1-t0)/60)
 
-main()
+# main()
