@@ -772,8 +772,6 @@ def SpeciesPrediction(dataset, hidden_node, outputFile):
             pseudos = {"NetMHC": PC.NetMHC_pseudo_sequence, "global_core": PC.globel_pseudo_sequence_core, "HLA": PC.HLA_pseudo_sequence}
         species_dataset = dataset.loc[dataset["species"] == species]
         for key in pseudos:
-            if key in pseudoPositionDic:
-                continue
             pseudo_position = pseudos[key]
             MHCSeqDic = loadMHCSeq()
             y = species_dataset.log50k.to_numpy()
@@ -794,7 +792,7 @@ def SpeciesPrediction(dataset, hidden_node, outputFile):
             reg = MLPRegressor(hidden_layer_sizes=(hidden_node), alpha=0.01, max_iter=5000,
                                 activation='relu', solver='adam', random_state=2)
             ##cross_validation not done
-            PreCirNum = 10
+            PreCirNum = 6
             avg_auc_list = []
             avg_r_list = []
             for rd in range(PreCirNum):
@@ -820,16 +818,16 @@ def SpeciesPrediction(dataset, hidden_node, outputFile):
                 
                 avg_auc = np.mean(auc_list)
                 avg_r = np.mean(r_list)
-                if len(avg_auc_list) > 0 and avg_auc < 0.99*avg_auc_list[-1]:
+                if len(avg_auc_list) > 0 and avg_auc < 0.99*avg_auc_list[-1][0]:
                     break
-                avg_auc_list.append(avg_auc)
-                avg_r_list.append(avg_r)
+                avg_auc_list.append(np.array([avg_auc]+auc_list))
+                avg_r_list.append(np.array([avg_r]+r_list))
 
             # print(avg_auc_list)
             # print(avg_r_list)
             
-            auc_df = pd.DataFrame(np.array(avg_auc_list[-1:]+avg_auc_list).reshape(1,-1), columns = ['final']+[str(i+1)+"-round" for i in range(len(avg_auc_list))], index=[species+"_"+key])
-            r_df = pd.DataFrame(np.array(avg_r_list[-1:]+avg_r_list).reshape(1,-1), columns = ['final']+[str(i+1)+"-round" for i in range(len(avg_r_list))], index=[species+"_"+key])
+            auc_df = pd.DataFrame(np.array(avg_auc_list[-1]).reshape(1,-1), columns = ['avg_AUC']+[str(i)+"-fold" for i in range(1, 6)], index=[species+"_"+key])
+            r_df = pd.DataFrame(np.array(avg_r_list[-1]).reshape(1,-1), columns = ['avg_PCC']+[str(i)+"-fold" for i in range(1, 6)], index=[species+"_"+key])
             print(auc_df)
             print(r_df)
             
@@ -838,9 +836,9 @@ def SpeciesPrediction(dataset, hidden_node, outputFile):
 
             path = os.path.join(model_path, "allmerPan")
             fname = os.path.join(os.path.join(path, 'ExistStart'), species+"_"+key+'.joblib')
-            if reg is not None:
-                joblib.dump(reg, fname, protocol=2)
-                print("%s fitting pseudo %s is done" %('ExistStart', species+"_"+key))
+            # if reg is not None:
+            #     joblib.dump(reg, fname, protocol=2)
+            #     print("%s fitting pseudo %s is done" %('ExistStart', species+"_"+key))
 
 
 def test_SpeciesPrediction():
@@ -851,7 +849,7 @@ def test_SpeciesPrediction():
     outputFile = "MHCpan_SpeciesSpecific_ExistStart"
     SpeciesPrediction(dataset, hidden_node, outputFile)
 
-# test_SpeciesPrediction()
+test_SpeciesPrediction()
 
 def cross_Prediction():
     '''Use a part of dataset of a species as test data, others (including other species) are training set.
@@ -979,7 +977,7 @@ def test_PredictScore():
     # PredictScore(dataset, 68, True, os.path.join(current_path, "mhcipan_ExistStart_Specific_VACV_result.csv"))
     PredictScore(dataset, 68, True, os.path.join(current_path, "mhcipan_ExistStart_Specific_Tumor_result.csv"))
 
-test_PredictScore()
+# test_PredictScore()
 
 def main():
     file_path = os.path.join(data_path, "modified_mhc.20130222.csv")
