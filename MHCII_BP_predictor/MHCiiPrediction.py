@@ -32,7 +32,8 @@ model_path = os.path.join(module_path,"models") #code\MHC-peptide_prediction\mod
 data_path = os.path.join(module_path,"data") #code\MHC-peptide_prediction\data
 mhcii_path = os.path.join(data_path, "mhcii")
 
-blosum_encode = PF2.blosum50_encode
+def blosum50_encode(seq):
+    return PF2.encode(PF2.readBLOSUM(50), seq)
 
 def EncodeTo9mer(seq, blosum_encode):
     '''Transform allmer sequence to potential 9mer binding core

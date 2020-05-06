@@ -20,18 +20,28 @@ module_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__))) #code\
 current_path = os.path.dirname(os.path.abspath(__file__)) #code\MHC-peptide_prediction\MHCI_BP_predictor
 model_path = os.path.join(module_path,"models") #code\MHC-peptide_prediction\models
 data_path = os.path.join(module_path,"data") #code\MHC-peptide_prediction\data
+matrices_path = os.path.join(module_path, "matrices")
 
 
 codes = ['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L',
          'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'Y']
 
-def readBLOSUM50():
-    filepath = os.path.join(current_path, "BLOSUM50.txt")
-    # header = ['A','R','N','D','C','Q','E','G','H','I','L','K','M','F','P','S','T','W','Y','V','B','Z','X','*']
-    blosum50 = pd.read_csv(filepath, header=0, index_col=0)
-    return blosum50
+def readBLOSUM(index = 0):
+    '''read BLOSUM matrix to DataFrame by calling its index. eg: 50, 62. Type readBLOSUM() for help
+    index: int
+        The index of BLOSUM matrix, 62 for blosum62
+    return DataFrame
+        The BLOSUM matrix DataFrame
 
-blosum50 = readBLOSUM50()
+    '''
+    matricesList = [i for i in [40, 50, 55, 60 ,62, 65, 70, 75, 80, 85, 90]]
+    if index == 0:
+        print("Read BLOSUM matrix as DataFrame.\nAvailable index:", matricesList)
+        return 
+    filepath = os.path.join(matrices_path, "BLOSUM"+str(index)+".txt")
+    # header = ['A','R','N','D','C','Q','E','G','H','I','L','K','M','F','P','S','T','W','Y','V','B','Z','X','*']
+    blosum = pd.read_csv(filepath, header=0, index_col=0)
+    return blosum
 
 def dataset2fasta(dataset, filePath):
     '''Convert MHC affinity DataFrame to fasta file
@@ -58,31 +68,16 @@ def dataset2fasta(dataset, filePath):
 
     return True
 
-def blosum_encode(seq):
+def encode(matix, seq):
     '''
     Encode protein sequence, seq, to one-dimension array.
-    Use blosum62 matrix to encode the number.
+    Use blosum matrix to encode the number.
     input: [string] seq (length = n)
     output: [1x24n ndarray] e
     '''
     #encode a peptide into blosum features
     s=list(seq)
-    blosum62 = ep.blosum62
-    x = pd.DataFrame([blosum62[i] for i in seq]).reset_index(drop=True)
-    e = x.to_numpy().flatten() 
-    # print(x)   
-    return e
-
-def blosum50_encode(seq):
-    '''
-    Encode protein sequence, seq, to one-dimension array.
-    Use blosum62 matrix to encode the number.
-    input: [string] seq (length = n)
-    output: [1x24n ndarray] e
-    '''
-    #encode a peptide into blosum features
-    s=list(seq)
-    x = pd.DataFrame([blosum50[i] for i in seq]).reset_index(drop=True)
+    x = pd.DataFrame([matix[i] for i in seq]).reset_index(drop=True)
     e = x.to_numpy().flatten() 
     # print(x)   
     return e

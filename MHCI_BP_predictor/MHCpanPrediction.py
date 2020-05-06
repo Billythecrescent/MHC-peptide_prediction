@@ -35,7 +35,8 @@ data_path = os.path.join(module_path,"data") #code\MHC-peptide_prediction\data
 mhc_path = os.path.join(current_path, "MHC_proteins")
 pseudo_path = os.path.join(current_path, "pseudo")
 
-blosum_encode = PF.blosum50_encode
+def blosum50_encode(seq):
+    return PF.encode(PF.readBLOSUM(50), seq)
 
 def ProcessMHCfile(species, dataset):
     alleles = [allele for allele in dataset.allele.unique().tolist() if allele[:(len(species))] == species]
@@ -283,7 +284,7 @@ def test_AllmerPanEncoder():
     initialMHC = MHCSeqDic['HLA-A*01:01']
     pseudoPosition = PC.NetMHC_pseudo_sequence
     pseudoSeq = pseudoSeqGenerator(initialMHC, pseudoPosition)
-    print(AllmerPanEncoder(pseudoSeq, "ABCDEFGH", blosum_encode))
+    print(AllmerPanEncoder(pseudoSeq, "ABCDEFGH", blosum50_encode))
 
 # test_AllmerPanEncoder()
 
@@ -340,7 +341,7 @@ def test_AllmerPanPrepredict():
         ExistReg = joblib.load(fname)
     else:
         ExistReg = None
-    AllmerPanPrepredict(pseudoSeq, peptide, blosum_encode, ExistReg, True)
+    AllmerPanPrepredict(pseudoSeq, peptide, blosum50_encode, ExistReg, True)
 
 # test_AllmerPanPrepredict()
 
@@ -447,7 +448,7 @@ def test_RandomStartPanPredictor():
     # print(shuffled_dataset)
     # print(shuffled_dataset.allele.unique())
     hidden_node = 10
-    RandomStartPanPredictor(shuffled_dataset, hidden_node, pseudoPosition, blosum_encode)
+    RandomStartPanPredictor(shuffled_dataset, hidden_node, pseudoPosition, blosum50_encode)
 
 # test_RandomStartPanPredictor()
 
@@ -480,7 +481,7 @@ def test_Basic9merPanPrediction():
     # print(shuffled_dataset.allele.unique())
     # print(pseudoPosition)
     hidden_node = 20
-    Basic9merPanPrediction(shuffled_dataset, hidden_node, "NetMHC", pseudoPosition, blosum_encode)
+    Basic9merPanPrediction(shuffled_dataset, hidden_node, "NetMHC", pseudoPosition, blosum50_encode)
 
 # test_Basic9merPanPrediction()
 
@@ -520,7 +521,7 @@ def test_Basic9merPanCrossValid():
     # print(pseudoPosition)
     MHCSeqDic = loadMHCSeq()
     y = dataset.log50k.to_numpy()
-    X = dataset.apply(lambda x: pd.Series(blosum_encode(x.peptide+pseudoSeqGenerator(MHCSeqDic[x.allele], pseudoPosition))),1).to_numpy()
+    X = dataset.apply(lambda x: pd.Series(blosum50_encode(x.peptide+pseudoSeqGenerator(MHCSeqDic[x.allele], pseudoPosition))),1).to_numpy()
 
     AUClist = []
     PCClist = []
@@ -528,7 +529,7 @@ def test_Basic9merPanCrossValid():
     header.to_csv(os.path.join(current_path, "basicPan_crossValidation.csv"), mode='a', header=False)
     HiddenRange = range(41, 60)
     for i in HiddenRange:
-        auc, r = Basic9merPanCrossValid(X, y, i, blosum_encode)
+        auc, r = Basic9merPanCrossValid(X, y, i, blosum50_encode)
         score = pd.DataFrame(np.array([auc, r]).reshape(1, -1), columns=["AUC", "PCC"], index=[str(i)])
         score.to_csv(os.path.join(current_path, "basicPan_crossValidation.csv"), mode='a', header=False)
         AUClist.append(auc)
@@ -616,7 +617,7 @@ def test_ExistStartPanPredictor():
     # print(shuffled_dataset)
     # print(shuffled_dataset.allele.unique())
     hidden_node = 10
-    ExistStartPanPredictor(shuffled_dataset, hidden_node, pseudoPosition, blosum_encode)
+    ExistStartPanPredictor(shuffled_dataset, hidden_node, pseudoPosition, blosum50_encode)
 
 # test_ExistStartPanPredictor()
 
@@ -721,11 +722,11 @@ def leaveOnePrediction(dataset, hidden_node, outputFile):
                 print("Spieces: %s, pseudo: %s, round %d starts" %(species, key, rd))
                 ##encode the peptide
                 if rd == 0:
-                    X_train = other_dataset.apply(lambda x: pd.Series(AllmerPanPrepredict(pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position), x.peptide, blosum_encode, ExistReg, True)),1).to_numpy()
-                    X_test = species_dataset.apply(lambda x: pd.Series(AllmerPanPrepredict(pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position), x.peptide, blosum_encode, ExistReg, True)),1).to_numpy()
+                    X_train = other_dataset.apply(lambda x: pd.Series(AllmerPanPrepredict(pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position), x.peptide, blosum50_encode, ExistReg, True)),1).to_numpy()
+                    X_test = species_dataset.apply(lambda x: pd.Series(AllmerPanPrepredict(pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position), x.peptide, blosum50_encode, ExistReg, True)),1).to_numpy()
                 else:
-                    X_train = other_dataset.apply(lambda x: pd.Series(AllmerPanPrepredict(pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position), x.peptide, blosum_encode, reg, False)),1).to_numpy()
-                    X_test = species_dataset.apply(lambda x: pd.Series(AllmerPanPrepredict(pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position), x.peptide, blosum_encode, reg, False)),1).to_numpy()
+                    X_train = other_dataset.apply(lambda x: pd.Series(AllmerPanPrepredict(pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position), x.peptide, blosum50_encode, reg, False)),1).to_numpy()
+                    X_test = species_dataset.apply(lambda x: pd.Series(AllmerPanPrepredict(pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position), x.peptide, blosum50_encode, reg, False)),1).to_numpy()
                 reg.fit(X_train, y_train)
                 scores = reg.predict(X_test)
                 # print(scores)
@@ -801,9 +802,9 @@ def SpeciesPrediction(dataset, hidden_node, outputFile):
                 r_list = []
                 ##encode the peptide
                 if rd == 0:
-                    X = species_dataset.apply(lambda x: pd.Series(AllmerPanPrepredict(pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position), x.peptide, blosum_encode, ExistReg, True)),1).to_numpy()
+                    X = species_dataset.apply(lambda x: pd.Series(AllmerPanPrepredict(pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position), x.peptide, blosum50_encode, ExistReg, True)),1).to_numpy()
                 else:
-                    X = species_dataset.apply(lambda x: pd.Series(AllmerPanPrepredict(pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position), x.peptide, blosum_encode, reg, False)),1).to_numpy()
+                    X = species_dataset.apply(lambda x: pd.Series(AllmerPanPrepredict(pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position), x.peptide, blosum50_encode, reg, False)),1).to_numpy()
 
                 kf = KFold(n_splits=5, shuffle=True, random_state=0)
                 for k, (train, test) in enumerate(kf.split(X, y)):
@@ -894,11 +895,11 @@ def cross_Prediction():
                 print("Subtype: %s, pseudo: %s, round %d starts" %(subtype, key, rd))
                 ##encode the peptide
                 if rd == 0:
-                    X_train = other_dataset.apply(lambda x: pd.Series(AllmerPanPrepredict(pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position), x.peptide, blosum_encode, ExistReg, True)),1).to_numpy()
-                    X_test = subtype_dataset.apply(lambda x: pd.Series(AllmerPanPrepredict(pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position), x.peptide, blosum_encode, ExistReg, True)),1).to_numpy()
+                    X_train = other_dataset.apply(lambda x: pd.Series(AllmerPanPrepredict(pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position), x.peptide, blosum50_encode, ExistReg, True)),1).to_numpy()
+                    X_test = subtype_dataset.apply(lambda x: pd.Series(AllmerPanPrepredict(pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position), x.peptide, blosum50_encode, ExistReg, True)),1).to_numpy()
                 else:
-                    X_train = other_dataset.apply(lambda x: pd.Series(AllmerPanPrepredict(pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position), x.peptide, blosum_encode, reg, False)),1).to_numpy()
-                    X_test = subtype_dataset.apply(lambda x: pd.Series(AllmerPanPrepredict(pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position), x.peptide, blosum_encode, reg, False)),1).to_numpy()
+                    X_train = other_dataset.apply(lambda x: pd.Series(AllmerPanPrepredict(pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position), x.peptide, blosum50_encode, reg, False)),1).to_numpy()
+                    X_test = subtype_dataset.apply(lambda x: pd.Series(AllmerPanPrepredict(pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position), x.peptide, blosum50_encode, reg, False)),1).to_numpy()
                 reg.fit(X_train, y_train)
                 scores = reg.predict(X_test)
                 # print(scores)
@@ -956,7 +957,7 @@ def PredictScore(dataset, hidden_node, ifSpecific, outputFile):
             print("\nPrediction Mode: ExistStart Prediction\nEncode Method: blosum50\nhidden node: %d\nspecies: %s\npseudoName: %s\n" \
                 %(hidden_node, species, key))
             MHCSeqDic = loadMHCSeq()
-            X = species_dataset.apply(lambda x: pd.Series(AllmerPanPrepredict(pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position), x.peptide, blosum_encode, reg, False)),1).to_numpy()
+            X = species_dataset.apply(lambda x: pd.Series(AllmerPanPrepredict(pseudoSeqGenerator(MHCSeqDic[x.allele], pseudo_position), x.peptide, blosum50_encode, reg, False)),1).to_numpy()
             scores = pd.DataFrame(reg.predict(X), columns=['MHCipan_Exist_log50k'], index=species_dataset.index)
             result = pd.concat([species_dataset, scores], axis=1)
             # print(result)
@@ -999,7 +1000,7 @@ def main():
         data9mer = dataset.loc[dataset['length'] == 9]
         shuffled_dataset = shuffle(data9mer, random_state=0)
         hidden_node = 20
-        Basic9merPanPrediction(shuffled_dataset, hidden_node, key, pseudoPosition, blosum_encode)
+        Basic9merPanPrediction(shuffled_dataset, hidden_node, key, pseudoPosition, blosum50_encode)
         
     # for key in pseudoPositionDic:
     #     MHCpanBuildPredictor(dataset, blosum_encode, bestHidenNode, False, key, pseudoPositionDic, "MHCpan-ExistStart-AllPseudo")
