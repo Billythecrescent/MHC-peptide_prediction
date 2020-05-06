@@ -21,19 +21,11 @@ data_path = os.path.join(module_path,"data") #code\MHC-peptide_prediction\data
 def blosum62_encode(seq):
     return PF.encode(PF.readBLOSUM(62), seq)
 
-def find_model(allele):
-    fname = os.path.join(model_path, allele+'.joblib')
-    if os.path.exists(fname):
-        reg = joblib.load(fname)
-        return reg
-    else:
-        return
-
 def evaluate_predictor(X, y, allele):
 
     #print (len(data))
     # print(list(data.peptide), allele)
-    reg = find_model(allele)
+    reg = PF.find_model(allele, 9)
     if reg is None:
         print ('Locals do not have model for this allele.')
         return
@@ -67,7 +59,7 @@ def predict_non9mer(allele, seq):
 
     #find model
     aw = re.sub('[*:]','_',allele) 
-    reg = find_model(aw)
+    reg = PF.find_model(aw, 9)
     if reg is None:
         print ('Locals do not have model for this allele.')
         return 0
@@ -151,44 +143,6 @@ def get_evaluation_by_allele():
         print("%s is done, run in Elapsed time %d(m)" %(allele, (t1-t0)/60))
         
 # get_evaluation_by_allele()
-
-def mhci1_predictPeptide(dataset, outputFile=None):
-    dataset = pd.DataFrame(dataset.query('length > 7 and length < 12'))
-    alleles = dataset.allele.unique().tolist()
-    df_list = []
-    print(dataset)
-    for allele in alleles:
-        allele_dataset = dataset.loc[dataset['allele'] == allele]
-        lengths = allele_dataset.length.unique().tolist()
-        for length in lengths:
-            data = allele_dataset.loc[allele_dataset['length'] == length]
-            if len(data) == 0:
-                continue
-            aw = re.sub('[*:]','_',allele) 
-            reg = PF.find_model(aw, length)
-            if reg == None:
-                scores = pd.DataFrame(np.array(['nan']*len(data)), columns=['MHCi1_log50k'], index=data.index)
-            else:
-                X = data.peptide.apply(lambda x: pd.Series(blosum62_encode(x)),1)
-                # print(data.shape, X.shape)
-                scores = pd.DataFrame(reg.predict(X), columns=['MHCi1_log50k'], index=data.index)
-            result = pd.concat([data, scores], axis=1)
-            df_list.append(result)
-    combined_df = pd.concat(df_list, axis=0, sort=True)
-    combined_df.sort_index(inplace=True)
-    print(combined_df)
-
-    if outputFile != None:
-        combined_df.to_csv(outputFile)
-
-def test_mhci1_predictPeptide():
-    # path = os.path.join(data_path, "VACV_evaluation_dataset.csv")
-    path = os.path.join(data_path, "modified_mhciTumor_dataset.csv")
-    dataset = pd.read_csv(path)
-    # mhci1_predictPeptide(dataset, os.path.join(current_path, "mhci1_VACV_result.csv"))
-    mhci1_predictPeptide(dataset, os.path.join(current_path, "mhci1_Tumor_result.csv"))
-
-# test_mhci1_predictPeptide()
 
 def mhci2_predictPeptide(dataset, outputFile=None):
     alleles = dataset.allele.unique().tolist()

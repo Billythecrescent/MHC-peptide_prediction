@@ -20,3 +20,11 @@ Final-year project of Computational Biology major in Sichuan University (SCU).
 `/MHCII_BP_predictor` is the project using BP neural network to predict peptide-MHCII binding
 
 `/MHCI_CNN_predictor` is the project using BP neural network to predict peptide-MHCII binding
+
+**Before running the scrips, please check the reliable packages being properly installed!**
+
+You can use the following dos command to install all the required packages
+
+```Dos
+pip install -r requirement.txt
+```
