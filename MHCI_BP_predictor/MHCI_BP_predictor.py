@@ -21,84 +21,100 @@ current_path = os.path.dirname(os.path.abspath(__file__)) #code\MHC-peptide_pred
 model_path = os.path.join(module_path,"models") #code\MHC-peptide_prediction\models
 data_path = os.path.join(module_path,"data") #code\MHC-peptide_prediction\data
 
-codes = ['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L',
-         'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'Y']
-
-def blosum_encode(seq):
-    '''
-    Encode protein sequence, seq, to one-dimension array.
-    Use blosum62 matrix to encode the number.
-    input: [string] seq (length = n)
-    output: [1x24n ndarray] e
-    '''
-    #encode a peptide into blosum features
-    s=list(seq)
-    blosum62 = ep.blosum62
-    x = pd.DataFrame([blosum62[i] for i in seq]).reset_index(drop=True)
-    e = x.to_numpy().flatten() 
-    # print(x)   
-    return e
-
-def auc_score(true,sc,cutoff=None):
-    '''
-    Calculate the auc score of soc curve
-    '''
-    if cutoff!=None:
-        true = (true<=cutoff).astype(int)
-        sc = (sc<=cutoff).astype(int)
-    # print(true, sc)
-    
-    r = metrics.roc_auc_score(true, sc) 
-    # #Or use the following code for alternative
-    # fpr, tpr, thresholds = metrics.roc_curve(true, sc, pos_label=1)
-    # r = metrics.auc(fpr, tpr)
-    
-    return  r
+def blosum62_encode(seq):
+    return PF.encode(PF.readBLOSUM(62), seq)
 
 def build_predictor(training_data, allele, encoder, hidden_node):
-
+    '''use taining data to train MLPRegressor model
+    training_data: DataFrame
+        the training data (must contain peptide and log50k column)
+    allele: string
+        the name of the allele, must be standard name
+    encoder: function
+        the encoding method used in the training
+    hidden_node: int
+        hidden node number
+    
+    Return:
+    -------
+    reg: MLPRegressor
+        The fitted regressor model
+    '''
     data = training_data.loc[training_data['allele'] == allele]
+
+    #set data numebr threshold
     if len(data) < 100:
         return
-
-    # #write training dataframe to csv file
-    # aw = re.sub('[*:]','_',allele) 
-    # data.to_csv(os.path.join('alletes',aw+'_data.csv'))
     
     reg = MLPRegressor(hidden_layer_sizes=(hidden_node), alpha=0.01, max_iter=5000, early_stopping=True,
                         activation='relu', solver='adam', random_state=2)
     X = data.peptide.apply(lambda x: pd.Series(encoder(x)),1) 
     y = data.log50k
 
-    ## ---- TEST ---- ##
-    # print(X)
-    # print (allele, len(X))
-    
     reg.fit(X,y)       
     return reg
 
-def get_allele_names(data):
+def get_allele_names(data, threshold=100):
+    '''find alleles in the data which have more data number than the threshold
+    data: DataFrame
+        the object data
+    threshold: int
+        data number (sample number) threshold
+    
+    Return:
+    -------
+    names: list
+        the list of the alleles having more data than threshold
+    '''
     a = data.allele.value_counts()
-    a =a[a>200]
-    return list(a.index)
+    a =a[a>threshold]
+    names = list(a.index)
+    return names
 
-def build_prediction_model(training_data, hidden_node):
-    al = training_data.allele.unique().tolist()
-    print(al)
-    for a in al:
-        aw = re.sub('[*:]','_', a) 
+def basicMHCi_save_model(training_data, hidden_node):
+    '''conduct basic (9mer) MHCi predictor building and save it to model_path.
+    training_data: DataFrame
+        the training data (must contain peptide and log50k column)
+    hidden_node: int
+        hidden node number
+
+    Return:
+    -------
+    None
+    '''
+    alleles = training_data.allele.unique().tolist()
+    # print(alleles)
+    for allele in alleles:
+        aw = re.sub('[*:]','_', allele) 
         fname = os.path.join(model_path, aw+'.joblib')
-        reg = build_predictor(training_data, a, blosum_encode, hidden_node)
+        reg = build_predictor(training_data, allele, blosum62_encode, hidden_node)
         if reg is not None:
             joblib.dump(reg, fname, protocol=2)
-            print("predictor for allele %s is done" %a)
+            print("predictor for allele %s is done" %allele)
 
-def basicMHCiCrossValid(X, y, hidden_node):
+def basicMHCiCrossValid(X, y, hidden_node, cv_num):
+    '''K-fold Cross Validation for basic MHCi1 method
+    X: DataFrame
+        encoded training input nodes (features)
+    y: DataFrame
+        labels
+    hidden_node: int
+        hidden node number
+    cv_num: int
+        the K number in K-fold CrossValidation (CV)
+
+    Return:
+    ------ 
+    avg_auc: double
+        average Area Under Curve (AUC) valie in K-fold CV
+    avg_r: double
+        average Pearson Correlation Coeefficient (PCC) value in k-fold CV
+    '''
     reg = MLPRegressor(hidden_layer_sizes=(hidden_node), alpha=0.01, max_iter=1000,
                         activation='relu', solver='adam', random_state=2)
     auc_list = []
     r_list = []
-    kf = KFold(n_splits=5, shuffle=True)
+    kf = KFold(n_splits=cv_num, shuffle=True)
     for k, (train, test) in enumerate(kf.split(X, y)):
         print("Hidden nodee:%d, fold %d starts" %(hidden_node, k))
         t0 = time()
@@ -118,6 +134,8 @@ def basicMHCiCrossValid(X, y, hidden_node):
     return avg_auc, avg_r
 
 def test_Basic9merCrossValid():
+    '''Test and Record Basic9mer Cross Validation
+    '''
     file_path = os.path.join(data_path, "modified_mhc.20130222.csv")
     dataset = pd.read_csv(file_path)
     dataset = dataset.loc[dataset['length'] == 9]
@@ -130,12 +148,12 @@ def test_Basic9merCrossValid():
     for allele in alleles:
         t0 = time()
         allele_dataset = dataset.loc[dataset['allele'] == allele]
-        X = allele_dataset.peptide.apply(lambda x: pd.Series(blosum_encode(x)),1).to_numpy()
+        X = allele_dataset.peptide.apply(lambda x: pd.Series(blosum62_encode(x)),1).to_numpy()
         y = allele_dataset.log50k.to_numpy()
         auc_list = []
         pcc_list = []
         for i in HiddenRange:
-            auc, r = basicMHCiCrossValid(X, y, i)
+            auc, r = basicMHCiCrossValid(X, y, i, 5)
             auc_list.append(auc)
             pcc_list.append(r)
             # score = pd.DataFrame(np.array([auc, r]).reshape(1, -1), columns=["AUC", "PCC"], index=[str(i)])
@@ -149,7 +167,6 @@ def test_Basic9merCrossValid():
         t1 = time()
         print("%s is done, run in Elapsed time %d(m)" %(allele, (t1-t0)/60))
 
-
 # test_Basic9merCrossValid()
 
 def BuildModel(hidden_node):
@@ -161,9 +178,9 @@ def BuildModel(hidden_node):
         data = allele_dataset.loc[allele_dataset['allele'] == allele]
         aw = re.sub('[*:]','_', allele) 
         fname = os.path.join(model_path, aw+'.joblib')
-        reg = build_predictor(data, allele, blosum_encode, hidden_node)
+        reg = build_predictor(data, allele, blosum62_encode, hidden_node)
         if reg is not None:
             joblib.dump(reg, fname, protocol=2)
             print("predictor for allele %s is done" %allele)
 
-BuildModel(14)
+# BuildModel(14)

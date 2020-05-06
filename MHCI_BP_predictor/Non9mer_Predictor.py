@@ -19,7 +19,8 @@ current_path = os.path.dirname(os.path.abspath(__file__)) #code\MHC-peptide_pred
 model_path = os.path.join(module_path,"models") #code\MHC-peptide_prediction\models
 data_path = os.path.join(module_path,"data") #code\MHC-peptide_prediction\data
 
-blosum_encode = PF.blosum_encode
+def blosum62_encode(seq):
+    return PF.encode(PF.readBLOSUM(62), seq)
 
 def get_allele_names(data):
     a = data.allele.value_counts()
@@ -62,7 +63,7 @@ def build_prediction_model(training_data, length, hidden_node):
     for allele in alleles:
         aw = re.sub('[*:]','_',allele) 
         fname = os.path.join(path, aw + "-" + str(length) +'.joblib')
-        reg = build_predictor(training_data, allele, blosum_encode, hidden_node)
+        reg = build_predictor(training_data, allele, blosum62_encode, hidden_node)
         if reg is not None:
             joblib.dump(reg, fname, protocol=2)
             print("%s is done" %fname)
@@ -146,7 +147,7 @@ def test_Non9merCrossValid():
         t0 = time()
         for allele in alleles:
             allele_dataset = length_dataset.loc[length_dataset['allele'] == allele]
-            X = allele_dataset.peptide.apply(lambda x: pd.Series(blosum_encode(x)),1).to_numpy()
+            X = allele_dataset.peptide.apply(lambda x: pd.Series(blosum62_encode(x)),1).to_numpy()
             y = allele_dataset.log50k.to_numpy()
             auc_list = []
             pcc_list = []

@@ -144,7 +144,7 @@ def NinerEncode(seq):
     '''
     seqLen = len(seq)
     seqLenEncode = np.array([1/(1+np.exp((seqLen-15)/2)), 1-1/(1+np.exp((seqLen-15)/2))])
-    seqEncode = blosum_encode(seq)
+    seqEncode = blosum50_encode(seq)
     length_slide =np.array([0, 0])
     pos_slide = np.array([0, 0, 0])
     pfr = np.zeros(6*24)
@@ -182,7 +182,7 @@ def test_Basic9merPrediction():
     dataset = dataset.loc[dataset['allele'] == allele]
     dataset = shuffle(dataset, random_state=0)
     hidden_node = 10
-    Basic9merPrediction(allele, dataset, hidden_node, blosum_encode)
+    Basic9merPrediction(allele, dataset, hidden_node, blosum50_encode)
 
 # test_Basic9merPrediction()
 
@@ -229,7 +229,7 @@ def test_Basic9merCrossValid():
         auc_list = []
         # r_list = []
         for j in range(20):
-            auc, r = Basic9merCrossValid(dataset, hidden_node, blosum_encode)
+            auc, r = Basic9merCrossValid(dataset, hidden_node, blosum50_encode)
             auc_list.append(auc)
             # r_list.append(r)
         AUClist.append(np.mean(auc_list))
@@ -279,7 +279,7 @@ def test_AllmerPrepredict():
     if reg is None:
         print ('Locals do not have model for this allele.')
         return
-    X = AllmerPrepredict(peptide, blosum_encode, reg)
+    X = AllmerPrepredict(peptide, blosum50_encode, reg)
     print(X, X.shape)
 
 # test_AllmerPrepredict()
@@ -374,7 +374,7 @@ def BuildPredictor(dataset, hidden_node, score_filename):
     for allele in alleles:
         allele_dataset = dataset.loc[dataset['allele'] == allele]
         aw = re.sub('[*:]','_', allele)
-        reg, auc_df, r_df= MHCiiPredictor(allele, allele_dataset, hidden_node, blosum_encode)
+        reg, auc_df, r_df= MHCiiPredictor(allele, allele_dataset, hidden_node, blosum50_encode)
         auc_df.to_csv(os.path.join(current_path, score_filename + '_' + aw + "_auc.csv"), mode='a', header=False)
         r_df.to_csv(os.path.join(current_path, score_filename + '_' + aw + "_PCC.csv"), mode='a', header=False)
 
@@ -404,7 +404,7 @@ def AffinityPredict(dataset, outputFile=None):
             print("Can not find the model for %s in %s" %(allele, fname))
             continue
 
-        X = allele_dataset.peptide.apply(lambda x: pd.Series(AllmerPrepredict(x, blosum_encode, reg)),1).to_numpy()
+        X = allele_dataset.peptide.apply(lambda x: pd.Series(AllmerPrepredict(x, blosum50_encode, reg)),1).to_numpy()
         scores = pd.DataFrame(reg.predict(X), columns=['log50k'], index=allele_dataset.index)
         result = pd.concat([allele_dataset, scores], axis=1)
         # print(result)

@@ -18,7 +18,8 @@ current_path = os.path.dirname(os.path.abspath(__file__)) #code\MHC-peptide_pred
 model_path = os.path.join(module_path,"models") #code\MHC-peptide_prediction\models
 data_path = os.path.join(module_path,"data") #code\MHC-peptide_prediction\data
 
-blosum_encode = PF.blosum_encode
+def blosum62_encode(seq):
+    return PF.encode(PF.readBLOSUM(62), seq)
 
 def find_model(allele):
     fname = os.path.join(model_path, allele+'.joblib')
@@ -62,7 +63,7 @@ def predict_non9mer(allele, seq):
     # print(seq_df)
 
     #encode
-    X = seq_df.peptide.apply(lambda x: pd.Series(blosum_encode(x)),1)
+    X = seq_df.peptide.apply(lambda x: pd.Series(blosum62_encode(x)),1)
 
     #find model
     aw = re.sub('[*:]','_',allele) 
@@ -168,7 +169,7 @@ def mhci1_predictPeptide(dataset, outputFile=None):
             if reg == None:
                 scores = pd.DataFrame(np.array(['nan']*len(data)), columns=['MHCi1_log50k'], index=data.index)
             else:
-                X = data.peptide.apply(lambda x: pd.Series(blosum_encode(x)),1)
+                X = data.peptide.apply(lambda x: pd.Series(blosum62_encode(x)),1)
                 # print(data.shape, X.shape)
                 scores = pd.DataFrame(reg.predict(X), columns=['MHCi1_log50k'], index=data.index)
             result = pd.concat([data, scores], axis=1)
@@ -199,7 +200,7 @@ def mhci2_predictPeptide(dataset, outputFile=None):
         data_non9mer = allele_dataset.loc[allele_dataset['length'] != 9]
         aw = re.sub('[*:]','_',allele) 
         reg = PF.find_model(aw, 9)
-        X = data_9mer.peptide.apply(lambda x: pd.Series(blosum_encode(x)),1)
+        X = data_9mer.peptide.apply(lambda x: pd.Series(blosum62_encode(x)),1)
         data_9mer_scores = pd.DataFrame(reg.predict(X), columns=['MHCi2_log50k'], index=data_9mer.index)
         data_non9mer_scores = data_non9mer.peptide.apply(lambda x: predict_non9mer(allele, x))
         data_non9mer_scores = data_non9mer_scores.to_frame()
