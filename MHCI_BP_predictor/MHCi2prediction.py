@@ -1,4 +1,4 @@
-#MHCI_BP_evaluator.py
+#MHCi2_prediction.py
 
 import os, sys, math, re
 import numpy as np
@@ -103,24 +103,6 @@ def LengthFree_predictor(allele, data):
     # print(auc)
 
     return auc, pcc
-
-## Primary Test ##
-# allele = "HLA-A*01:01"
-# test_data_8 = ep.get_training_set(allele, length=8)
-# test_data_10 = ep.get_training_set(allele, length=10)
-# test_data_11 = ep.get_training_set(allele, length=11)
-# LengthFree_predictor(allele, test_data_11)
-
-## Secondary Test ##
-# dataset_filename = os.path.join(data_path, "evalset_8mer_normalization.csv")
-# df = pd.read_csv(dataset_filename)
-# alleles = df.allele.unique()
-# # print(alleles)
-# allele = alleles[12]
-# print(allele)
-# data = df.loc[df['allele'] == allele]
-# result = LengthFree_predictor(allele, data)
-
 
 def get_evaluation_by_allele():
     

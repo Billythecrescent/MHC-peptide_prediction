@@ -28,9 +28,8 @@ current_path = os.path.dirname(os.path.abspath(__file__)) #code\MHC-peptide_pred
 model_path = os.path.join(module_path,"models") #code\MHC-peptide_prediction\models
 data_path = os.path.join(module_path,"data") #code\MHC-peptide_prediction\data
 
-blosum_encode = PF.blosum_encode
-
-# print(type(blosum_encode("ASFCGSPY")), blosum_encode("ASFCGSPY").shape)
+def blosum62_encode(seq):
+    return PF.encode(PF.readBLOSUM(62), seq)
 
 def SlideTo9mer(seq):
     '''Transform allmer sequence to potential 9mer binding core
@@ -195,9 +194,9 @@ def test_AllmerPrepredict():
     randomPep = PF.randomPeptideGenerator(11, 9, 1)
     allele = "HLA-A*01:01"
     iniY = [0.1]
-    iniX, seq_list = AllmerEncoder(allele, randomPep[0], blosum_encode)
+    iniX, seq_list = AllmerEncoder(allele, randomPep[0], blosum62_encode)
     reg.fit(iniX, iniY)
-    AllmerPrepredict(allele, "ASFCGSPY", blosum_encode, reg, False)
+    AllmerPrepredict(allele, "ASFCGSPY", blosum62_encode, reg, False)
 
 def RandomStartPredictor(dataset, allele, blosum_encode, hidden_node):
     '''Prediction of specific allele with initial random-set predictor, 
@@ -289,7 +288,7 @@ def test_RandomStart():
     allele_dataset = dataset.loc[dataset['allele'] == allele]
     # print(allele_dataset)
     hidden_node = 5
-    RandomStartPredictor(allele_dataset, allele, blosum_encode, hidden_node)
+    RandomStartPredictor(allele_dataset, allele, blosum62_encode, hidden_node)
 
 def ExistStartPredictor(dataset, allele, blosum_encode, hidden_node):
     '''Prediction of specific allele with initial exist-set predictor, 
@@ -386,7 +385,7 @@ def test_ExistStart():
     # print(allele_dataset)
     # print(dataset)
     hidden_node = 5
-    ExistStartPredictor(allele_dataset, allele, blosum_encode, hidden_node)
+    ExistStartPredictor(allele_dataset, allele, blosum62_encode, hidden_node)
 
 def allmerPredictor(dataset, allele, blosum_encode, hidden_node, ifRandomStart):
     '''Choose prediction strategy according to ifRandomStart and perform cross validation
@@ -449,7 +448,7 @@ def BuildPredictor(dataset, hidden_node, ifRandomStart, score_filename):
         ##cross validation, determing the training and testing data
         #Here I need to get the score
         allele_dataset = dataset.loc[dataset['allele'] == allele]
-        reg, auc_df, r_df= allmerPredictor(allele_dataset, allele, blosum_encode, hidden_node, ifRandomStart)
+        reg, auc_df, r_df= allmerPredictor(allele_dataset, allele, blosum62_encode, hidden_node, ifRandomStart)
         
         auc_df.to_csv(os.path.join(current_path, score_filename + "_auc.csv"), mode='a', header=False)
         r_df.to_csv(os.path.join(current_path, score_filename + "_PCC.csv"), mode='a', header=False)
@@ -500,7 +499,7 @@ def AffinityPredict(dataset, ifRandomStart, outputFile=None):
             StartType = "ExistStart"
         aw = re.sub('[*:]','_',allele) 
         reg = allmer_find_model(aw, StartType)
-        X = allele_dataset.peptide.apply(lambda x: pd.Series(AllmerPrepredict(allele, x, blosum_encode, reg, False)),1).to_numpy()
+        X = allele_dataset.peptide.apply(lambda x: pd.Series(AllmerPrepredict(allele, x, blosum62_encode, reg, False)),1).to_numpy()
         scores = pd.DataFrame(reg.predict(X), columns=['MHCi3_log50k'+StartType], index=allele_dataset.index)
         result = pd.concat([allele_dataset, scores], axis=1)
         # print(result)
