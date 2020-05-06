@@ -71,29 +71,6 @@ def get_allele_names(data, threshold=100):
     names = list(a.index)
     return names
 
-def basicMHCi_save_model(training_data, length, hidden_node):
-    '''conduct basic (9mer) MHCi predictor building and save it to model_path.
-    training_data: DataFrame
-        the training data (must contain peptide and log50k column)
-    length: int
-        the length of the peptides in training_data
-    hidden_node: int
-        hidden node number
-
-    Return:
-    -------
-    None
-    '''
-    alleles = training_data.allele.unique().tolist()
-    path = os.path.join(model_path, "mhci1")
-    for allele in alleles:
-        aw = re.sub('[*:]','_', allele) 
-        fname = os.path.join(path, aw + "-" + str(length) +'.joblib')
-        reg = build_predictor(training_data, allele, blosum62_encode, hidden_node)
-        if reg is not None:
-            joblib.dump(reg, fname, protocol=2)
-            print("predictor for allele %s on length %d is done" %(allele, length))
-
 def basicMHCiCrossValid(X, y, hidden_node, cv_num):
     '''K-fold Cross Validation for basic MHCi1 method
     X: DataFrame
@@ -224,10 +201,11 @@ def MHCi1_BuildModel_For_SingleLength(dataset, length, hidden_node):
     '''
     allele_dataset = dataset.loc[dataset['length'] == length]
     alleles = allele_dataset.allele.unique().tolist()
+    path = os.path.join(model_path, "mhci1")
     for allele in alleles:
         data = allele_dataset.loc[allele_dataset['allele'] == allele]
         aw = re.sub('[*:]','_', allele) 
-        fname = os.path.join(model_path, aw+'.joblib')
+        fname = os.path.join(path, aw + "-" + str(length) +'.joblib')
         reg = build_predictor(data, allele, blosum62_encode, hidden_node)
         if reg is not None:
             joblib.dump(reg, fname, protocol=2)
@@ -373,4 +351,4 @@ def MHCi1_Build_Model_For_Lengths(DataPath, lengths, hidden_node):
         if len(length_dataset) > 20:
             MHCi1_BuildModel_For_SingleLength(length_dataset, length, hidden_node)
 
-# MHCi1_Build_Model_For_Lengths(os.path.join(data_path, "modified_mhc.20130222.csv"), [8, 10, 11, 12, 13, 14], 14)
+MHCi1_Build_Model_For_Lengths(os.path.join(data_path, "modified_mhc.20130222.csv"), [9], 14)
